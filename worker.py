@@ -12,10 +12,16 @@ logging.basicConfig(format='%(asctime)s %(levelname)s:\t %(message)s',
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
 
-SELF_SERVE_URL = 'https://secure.pub.build.mozilla.org/buildapi/self-serve/'
+SELF_SERVE_URL = 'https://secure.pub.build.mozilla.org/buildapi/self-serve'
 
 
 class TreeherderJobActionsConsumer(GenericConsumer):
+    """
+    Consumer for exchange/treeherder/v1/job-actions.
+
+    Documentation for the exchange:
+    https://wiki.mozilla.org/Auto-tools/Projects/Pulse/Exchanges#Treeherder:_Job_Actions
+    """
 
     def __init__(self, **kwargs):
         super(TreeherderJobActionsConsumer, self).__init__(
@@ -27,10 +33,12 @@ with open(CREDENTIALS_PATH, 'r') as f:
     CREDENTIALS = json.load(f)
 
 
-def get_request_id_from_job_id(job_id, job_guid):
-    """Pulse gives us job_id and job_guid, buildapi self-serve needs 'request_id'."""
-    # Not implemented yet, returning a mock value for testing
-    return 'xxxxxx'
+def _get_request_id_from_job_id(job_id):
+    """Get job_id from buildapi."""
+    url = '{}/jobs/{}'.format(SELF_SERVE_URL, job_id)
+    req = requests.get(url, auth=CREDENTIALS['LDAP'])
+    content = json.loads(req.content)
+    return content["request_id"]
 
 
 def run_pulse():
@@ -49,18 +57,21 @@ def run_pulse():
 
     def on_build_event(data, message):
         """Retrigger a job on retrigger actions, cancel a job on cancel actions."""
+        # Pulse gives us job_id and job_guid, buildapi self-serve needs 'request_id'
         job_id = data['job_id']
-        job_guid = data['job_guid']
-        request_id = get_request_id_from_job_id(job_id, job_guid)
+        request_id = _get_request_id_from_job_id(job_id)
+
         repo_name = data['project']
 
         # Retrigger action
         if data['action'] == 'retrigger':
-            make_retrigger_request(repo_name, request_id)
+            LOG.info('Retrigger request received for job %s' % job_id)
+            make_retrigger_request(repo_name, request_id, dry_run=True)
 
         # Cancel action
         elif data['action'] == 'cancel':
-            make_cancel_request(repo_name, request_id)
+            LOG.info('Cancel request received for job %s' % job_id)
+            make_cancel_request(repo_name, request_id, dry_run=True)
 
     pulse = TreeherderJobActionsConsumer(callback=on_build_event, **pulse_args)
     LOG.info('Listening on exchange/treeherder/v1/job-actions')
@@ -68,7 +79,7 @@ def run_pulse():
         pulse.listen()
 
 
-def make_retrigger_request(repo_name, request_id, count=1, dry_run=True):
+def make_retrigger_request(repo_name, request_id, dry_run=True, count=1):
     """
     Retrigger a request using buildapi self-serve.
 
@@ -82,9 +93,10 @@ def make_retrigger_request(repo_name, request_id, count=1, dry_run=True):
     # For now we should not call this function with dry_run=False
     # Added this assertion to avoid acidents
     assert dry_run
-    url = '{}{}/request'.format(SELF_SERVE_URL, repo_name)
+    url = '{}/{}/request'.format(SELF_SERVE_URL, repo_name)
     payload = {'request_id': request_id,
                'count': count}
+
     if dry_run:
         LOG.info('We would make a POST request to %s with this payload:' % url)
         LOG.info(payload)
@@ -109,12 +121,12 @@ def make_cancel_request(repo_name, request_id, dry_run=True):
     # Added this assertion to avoid accidents
     assert dry_run
 
-    url = '{}{}/request/{}'.format(SELF_SERVE_URL, repo_name, request_id)
+    url = '{}/{}/request/{}'.format(SELF_SERVE_URL, repo_name, request_id)
     if dry_run:
         LOG.info('We would make a DELETE request to %s.' % url)
         return None
 
-    req = requests.delete(url)
+    req = requests.delete(url, auth=CREDENTIALS['LDAP'])
 
 
 run_pulse()
