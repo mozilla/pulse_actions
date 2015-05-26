@@ -11,8 +11,11 @@ logging.basicConfig(format='%(asctime)s %(levelname)s:\t %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S')
 LOG = logging.getLogger()
 LOG.setLevel(logging.INFO)
+# requests is too noisy and adds no value
+logging.getLogger("requests").setLevel(logging.WARNING)
 
 SELF_SERVE_URL = 'https://secure.pub.build.mozilla.org/buildapi/self-serve'
+TREEHERDER_URL = 'https://treeherder.mozilla.org'
 
 
 class TreeherderJobActionsConsumer(GenericConsumer):
@@ -31,31 +34,48 @@ class TreeherderJobActionsConsumer(GenericConsumer):
 CREDENTIALS_PATH = os.path.expanduser('~/.mozilla/mozci/pulse_credentials.json')
 with open(CREDENTIALS_PATH, 'r') as f:
     CREDENTIALS = json.load(f)
-    CREDENTIALS['LDAP'] = tuple(CREDENTIALS['LDAP'])
+    # Since the script only uses LDAP credentials for making requests
+    # and we currently don't want to make requests (just test with
+    # dry-run) we're passing bad credentials to guarantee that nothing
+    # will be requested
+    CREDENTIALS['LDAP'] = 'bad credentials'
 
 
-def _get_request_id_from_job_id(job_id):
-    """Get job_id from buildapi."""
-    url = '{}/jobs/{}'.format(SELF_SERVE_URL, job_id)
-    req = requests.get(url, auth=CREDENTIALS['LDAP'])
-    content = json.loads(req.content)
-    return content["request_id"]
+def _get_request_id_from_job_id(repo_name, job_id):
+    """
+    This logic is copied from treeherder:
+
+    https://github.com/mozilla/treeherder/blob/master/ui/plugins/controller.js#L258
+    """
+    api_url = '{}/api/project/{}/jobs/{}'.format(TREEHERDER_URL, repo_name, job_id)
+    api_req = requests.get(api_url)
+    api_content = json.loads(api_req.content)
+    artifact_url = None
+    for artifact in api_content['artifacts']:
+        if artifact["name"] == "buildapi":
+            artifact_url = "{}{}".format(TREEHERDER_URL, artifact['resource_uri'])
+            break
+    if artifact_url is None:
+        return
+
+    artifact_req = requests.get(artifact_url)
+    artifact_content = json.loads(artifact_req.content)
+    return artifact_content["blob"]["request_id"]
 
 
 def run_pulse(repo_name=None, dry_run=True):
     """
     Listen to Treeherder's job actions on pulse in a infinite loop.
 
-
     When a repo_name is given, listen to only that branch, when it's
-    not listen to everything.
+    not listen to everything (on buildbot).
     """
     label = 'mozci'
 
     if repo_name is None:
-        topic = '#'
+        topic = 'buildbot.#.#'
     else:
-        topic = '#.{}.#'.format(repo_name)
+        topic = 'buildbot.{}.#'.format(repo_name)
 
     user = CREDENTIALS['pulse']['user']
     password = CREDENTIALS['pulse']['password']
@@ -69,20 +89,21 @@ def run_pulse(repo_name=None, dry_run=True):
 
     def on_build_event(data, message):
         """Retrigger a job on retrigger actions, cancel a job on cancel actions."""
-        # Pulse gives us job_id and job_guid, buildapi self-serve needs 'request_id'
-        job_id = data['job_id']
-        request_id = _get_request_id_from_job_id(job_id)
-
+        # Pulse gives us a job_id and a job_guid, we need request_id.
         repo_name = data['project']
+        job_id = data['job_id']
+        request_id = _get_request_id_from_job_id(repo_name, job_id)
 
         # Retrigger action
         if data['action'] == 'retrigger':
-            LOG.info('Retrigger request received for job %s' % job_id)
+            LOG.info('Retrigger request received. Data:')
+            LOG.info(data)
             make_retrigger_request(repo_name, request_id, dry_run)
 
         # Cancel action
         elif data['action'] == 'cancel':
-            LOG.info('Cancel request received for job %s' % job_id)
+            LOG.info('Cancel request received. Data:')
+            LOG.info(data)
             make_cancel_request(repo_name, request_id, dry_run)
 
     pulse = TreeherderJobActionsConsumer(callback=on_build_event, **pulse_args)
@@ -102,9 +123,6 @@ def make_retrigger_request(repo_name, request_id, dry_run=True, count=1):
     parameters. `count` defaults to 1, and represents the number
     of times this build  will be rebuilt.
     """
-    # For now we should not call this function with dry_run=False
-    # Added this assertion to avoid accidents
-    assert dry_run
     url = '{}/{}/request'.format(SELF_SERVE_URL, repo_name)
     payload = {'request_id': request_id,
                'count': count}
@@ -122,6 +140,7 @@ def make_retrigger_request(repo_name, request_id, dry_run=True, count=1):
     )
     return req
 
+
 def make_cancel_request(repo_name, request_id, dry_run=True):
     """
     Cancel a request using buildapi self-serve. Returns a request.
@@ -129,10 +148,6 @@ def make_cancel_request(repo_name, request_id, dry_run=True):
     Builapi documentation:
     DELETE /self-serve/{branch}/request/{request_id} Cancel the given request
     """
-    # For now we should not call this function with dry_run=False
-    # Added this assertion to avoid accidents
-    assert dry_run
-
     url = '{}/{}/request/{}'.format(SELF_SERVE_URL, repo_name, request_id)
     if dry_run:
         LOG.info('We would make a DELETE request to %s.' % url)
@@ -140,5 +155,6 @@ def make_cancel_request(repo_name, request_id, dry_run=True):
 
     req = requests.delete(url, auth=CREDENTIALS['LDAP'])
     return req
+
 
 run_pulse(repo_name=None, dry_run=True)
