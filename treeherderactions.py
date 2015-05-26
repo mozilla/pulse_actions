@@ -21,7 +21,7 @@ def get_request_id_from_job_id(repo_name, job_id):
 
 
 def on_buildbot_event(data, message, dry_run):
-    """Retrigger a job on retrigger actions, cancel a job on cancel actions on buildbot."""
+    """Act upon buildbot events."""
     # Pulse gives us a job_id and a job_guid, we need request_id.
     repo_name = data['project']
     job_id = data['job_id']
@@ -34,3 +34,9 @@ def on_buildbot_event(data, message, dry_run):
     # Cancel action
     elif data['action'] == 'cancel':
         make_cancel_request(repo_name, request_id, dry_run)
+
+
+def on_taskcluster_event(data, message, dry_run):
+    """Act upon taskcluster events."""
+    # Not implemented yet, see https://bugzilla.mozilla.org/show_bug.cgi?id=1168148#c7
+    pass
