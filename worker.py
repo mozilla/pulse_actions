@@ -2,8 +2,9 @@ import json
 import logging
 import os
 
-from treeherderactions import on_buildbot_event
+import config
 
+from argparse import ArgumentParser
 from mozillapulse.config import PulseConfiguration
 from mozillapulse.consumers import GenericConsumer
 
@@ -17,6 +18,17 @@ with open(CREDENTIALS_PATH, 'r') as f:
     CREDENTIALS = json.load(f)
 
 
+def parse_args(argv=None):
+    """Parse command line options."""
+    parser = ArgumentParser()
+
+    parser.add_argument("exchange")
+    parser.add_argument("topic")
+
+    options = parser.parse_args(argv)
+    return options
+
+    
 class PulseConsumer(GenericConsumer):
     """
     Consumer for pulse exchanges.
@@ -31,7 +43,7 @@ class PulseConsumer(GenericConsumer):
 
 
 def run_pulse(exchange, event_handler, topic, dry_run=True):
-    """Listen to a pulse exchange in a infinite loop."""
+    """Listen to a pulse exchange in a infinite loop. Call event_handler on every message."""
 
     label = 'pulse_actions'
     user = CREDENTIALS['pulse']['user']
@@ -57,7 +69,18 @@ def run_pulse(exchange, event_handler, topic, dry_run=True):
 
 
 if __name__ == '__main__':
+    options = parse_args()
+    
     LOG.setLevel(logging.INFO)
     # requests is too noisy
     logging.getLogger("requests").setLevel(logging.WARNING)
-    run_pulse('exchange/treeherder/v1/job-actions', on_buildbot_event, 'buildbot.#.#', dry_run=True)
+
+    # Finding the right event handler for the given exchange and topic
+    topic_base = options.topic.split('.')[0]
+    try:
+        handler_function = config.HANDLERS_BY_EXCHANGE[options.exchange][topic_base]
+    except KeyError:
+        LOG.error("We don't have an event handler for %s with topic %s." % (options.exchange, options.topic)
+        exit(1)
+
+    run_pulse(options.exchange, handler_function, options.topic, dry_run=True)
