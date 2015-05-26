@@ -15,7 +15,7 @@ LOG.setLevel(logging.INFO)
 logging.getLogger("requests").setLevel(logging.WARNING)
 
 SELF_SERVE_URL = 'https://secure.pub.build.mozilla.org/buildapi/self-serve'
-TREEHERDER_URL = 'https://treeherder.mozilla.org'
+TH_ARTIFACT_URL = 'https://treeherder.mozilla.org/api/project/{}/artifact/?job_id={}&name=buildapi'
 
 
 class TreeherderJobActionsConsumer(GenericConsumer):
@@ -42,25 +42,10 @@ with open(CREDENTIALS_PATH, 'r') as f:
 
 
 def _get_request_id_from_job_id(repo_name, job_id):
-    """
-    This logic is copied from treeherder:
-
-    https://github.com/mozilla/treeherder/blob/master/ui/plugins/controller.js#L258
-    """
-    api_url = '{}/api/project/{}/jobs/{}'.format(TREEHERDER_URL, repo_name, job_id)
-    api_req = requests.get(api_url)
-    api_content = json.loads(api_req.content)
-    artifact_url = None
-    for artifact in api_content['artifacts']:
-        if artifact["name"] == "buildapi":
-            artifact_url = "{}{}".format(TREEHERDER_URL, artifact['resource_uri'])
-            break
-    if artifact_url is None:
-        return
-
-    artifact_req = requests.get(artifact_url)
-    artifact_content = json.loads(artifact_req.content)
-    return artifact_content["blob"]["request_id"]
+    """Get buildapi's request_id from Treeherder's artifact API."""
+    artifact_url = TH_ARTIFACT_URL.format(repo_name, job_id)
+    artifact_content = requests.get(artifact_url).json()
+    return artifact_content[0]["blob"]["request_id"]
 
 
 def run_pulse(repo_name=None, dry_run=True):
@@ -156,5 +141,5 @@ def make_cancel_request(repo_name, request_id, dry_run=True):
     req = requests.delete(url, auth=CREDENTIALS['LDAP'])
     return req
 
-
+print _get_request_id_from_job_id('try', '7874748')
 run_pulse(repo_name=None, dry_run=True)
