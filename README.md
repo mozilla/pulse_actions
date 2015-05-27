@@ -4,9 +4,16 @@ This project is Pulse listener that listens to Treeherder's job cancellation and
 
 ### What it does
 
-worker.py listens to exchange/treeherder/v1/job-actions in an infinite loop. It calls make_retrigger_request when it sees a retrigger action and make_cancel_request when it sees a cancel action. Currently everything is run with dry_run=True, so instead of doing requests the script just logs the requests it would have made.
+- worker.py listens to `exchange/treeherder/v1/job-actions` in an infinite loop.
 
-### Current status:
+- When it sees a retrigger actions it makes a retrigger request in builapi self-serve using make_retrigger_request from mozci.
+
+- When it sees a cancel action it makes a cancel request in buildapi self-serve using make_cancel_request from mozci.
+
+-Currently everything is run with dry_run=True, so instead of doing requests the script just logs the requests it would have made.
+
+
+### Current status
 
 - worker.py reads exchange and topic from run_time_config.json. It then uses HANDLERS_BY_EXCHANGE, a dictionary defined in config.py to decide what function it will use to handle incoming messages.
 
