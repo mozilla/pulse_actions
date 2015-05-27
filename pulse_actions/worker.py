@@ -4,7 +4,6 @@ import os
 
 from handlers import config
 
-from argparse import ArgumentParser
 from mozillapulse.config import PulseConfiguration
 from mozillapulse.consumers import GenericConsumer
 
@@ -57,7 +56,7 @@ def run_pulse(exchange, topic, event_handler, dry_run=True):
         pulse.listen()
 
 
-if __name__ == '__main__':
+def main():
     with open('run_time_config.json', 'r') as f:
         options = json.load(f)
 
@@ -68,9 +67,9 @@ if __name__ == '__main__':
     # Finding the right event handler for the given exchange and topic
     topic_base = options['topic'].split('.')[0]
     try:
-        handler_function = config.HANDLERS_BY_EXCHANGE[options['exchange']][topic_base]
+        handler_function = config.HANDLERS_BY_EXCHANGE[options['exchange']]["topic"][topic_base]
     except KeyError:
-        LOG.error("We don't have an event handler for %s with topic %s." % (options.exchange, options.topic))
+        LOG.error("We don't have an event handler for %s with topic %s." % (options['exchange'], options['topic']))
         exit(1)
 
     run_pulse(
@@ -78,3 +77,6 @@ if __name__ == '__main__':
         topic=options['topic'],
         event_handler=handler_function,
         dry_run=True)
+
+if __name__ == '__main__':
+    main()
