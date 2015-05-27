@@ -23,9 +23,9 @@ setup(name='pulse-actions',
       include_package_data=True,
       zip_safe=False,
       install_requires=deps,
-      url='https://github.com/adusca/pulse_actions'
+      url='https://github.com/adusca/pulse_actions',
       entry_points={
           'console_scripts': [
-              'run-pulse-actions = pulse-actions.worker:main'
+              'run-pulse-actions = pulse_actions.worker:main'
               ],
           })

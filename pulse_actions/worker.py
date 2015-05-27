@@ -2,7 +2,7 @@ import json
 import logging
 import os
 
-import config
+from handlers import config
 
 from argparse import ArgumentParser
 from mozillapulse.config import PulseConfiguration
