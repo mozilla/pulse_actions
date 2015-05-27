@@ -18,17 +18,6 @@ with open(CREDENTIALS_PATH, 'r') as f:
     CREDENTIALS = json.load(f)
 
 
-def parse_args(argv=None):
-    """Parse command line options."""
-    parser = ArgumentParser()
-
-    parser.add_argument("exchange")
-    parser.add_argument("topic")
-
-    options = parser.parse_args(argv)
-    return options
-
-
 class PulseConsumer(GenericConsumer):
     """
     Creates a consumer object for the given exchange.
@@ -69,22 +58,23 @@ def run_pulse(exchange, topic, event_handler, dry_run=True):
 
 
 if __name__ == '__main__':
-    options = parse_args()
+    with open('run_time_config.json', 'r') as f:
+        options = json.load(f)
 
     LOG.setLevel(logging.INFO)
     # requests is too noisy
     logging.getLogger("requests").setLevel(logging.WARNING)
 
     # Finding the right event handler for the given exchange and topic
-    topic_base = options.topic.split('.')[0]
+    topic_base = options['topic'].split('.')[0]
     try:
-        handler_function = config.HANDLERS_BY_EXCHANGE[options.exchange][topic_base]
+        handler_function = config.HANDLERS_BY_EXCHANGE[options['exchange']][topic_base]
     except KeyError:
         LOG.error("We don't have an event handler for %s with topic %s." % (options.exchange, options.topic))
         exit(1)
 
     run_pulse(
-        exchange=options.exchange,
-        topic=options.topic,
+        exchange=options['exchange'],
+        topic=options['topic'],
         event_handler=handler_function,
         dry_run=True)
