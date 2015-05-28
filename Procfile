@@ -1,1 +1,1 @@
-worker: run-pulse-actions
+worker: python pulse_actions/worker.py
