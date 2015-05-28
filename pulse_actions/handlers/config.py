@@ -1,9 +1,9 @@
-import treeherderactions
+import treeherder_buildbot
 
 HANDLERS_BY_EXCHANGE = {
     "exchange/treeherder/v1/job-actions" : {
         "topic": {
-            "buildbot": treeherderactions.on_buildbot_event
+            "buildbot": treeherder_buildbot.on_buildbot_event
         }
     }
 }
