@@ -53,7 +53,10 @@ def run_pulse(exchange, topic, event_handler, dry_run=True):
 
 
 def main():
-    with open('./pulse_actions/run_time_config.json', 'r') as f:
+
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(current_dir, 'run_time_config.json')
+    with open(config_path, 'r') as f:
         options = json.load(f)
 
     LOG.setLevel(logging.INFO)

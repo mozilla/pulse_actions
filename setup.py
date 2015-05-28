@@ -7,7 +7,7 @@ deps = [
 ]
 
 setup(name='pulse-actions',
-      version='0.1.3',
+      version='0.1.4',
       description='A pulse listener that acts upon messages with mozci.',
       classifiers=['Intended Audience :: Developers',
                    'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
