@@ -12,10 +12,6 @@ logging.basicConfig(format='%(asctime)s %(levelname)s:\t %(message)s',
                     datefmt='%m/%d/%Y %I:%M:%S')
 LOG = logging.getLogger()
 
-CREDENTIALS_PATH = os.path.expanduser('~/.mozilla/mozci/pulse_credentials.json')
-with open(CREDENTIALS_PATH, 'r') as f:
-    CREDENTIALS = json.load(f)
-
 
 class PulseConsumer(GenericConsumer):
     """
@@ -34,8 +30,8 @@ def run_pulse(exchange, topic, event_handler, dry_run=True):
     """Listen to a pulse exchange in a infinite loop. Call event_handler on every message."""
 
     label = 'pulse_actions'
-    user = CREDENTIALS['pulse']['user']
-    password = CREDENTIALS['pulse']['password']
+    user = os.environ.get('PULSE_USER')
+    password = os.environ.get('PULSE_PW')
     pulse_args = {
         'applabel': label,
         'topic': topic,
@@ -57,7 +53,7 @@ def run_pulse(exchange, topic, event_handler, dry_run=True):
 
 
 def main():
-    with open('run_time_config.json', 'r') as f:
+    with open('./pulse_actions/run_time_config.json', 'r') as f:
         options = json.load(f)
 
     LOG.setLevel(logging.INFO)

@@ -2,12 +2,12 @@ from setuptools import setup, find_packages
 
 deps = [
     'mozillapulse',
-    'mozci>=0.6.1',
+    'mozci>=0.7.0',
     'requests',
 ]
 
 setup(name='pulse-actions',
-      version='0.1.1',
+      version='0.1.2',
       description='A pulse listener that acts upon messages with mozci.',
       classifiers=['Intended Audience :: Developers',
                    'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
