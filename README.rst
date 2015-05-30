@@ -42,6 +42,9 @@ From Pypi::
 Running
 =======
 
+If you installed with Pypi:
+---------------------------
+
 If you installed inside a virtualenv (called venv in this example)::
 
     venv/bin/run-pulse-actions
@@ -49,6 +52,12 @@ If you installed inside a virtualenv (called venv in this example)::
 If you installed globally (not recommended)::
 
     run-pulse-actions
+
+If you cloned the repo:
+----------------------
+::
+
+   python worker.py
 
 Adding more functionality
 =========================
