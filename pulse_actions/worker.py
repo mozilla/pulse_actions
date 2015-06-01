@@ -35,7 +35,7 @@ def run_pulse(exchange, topic, event_handler, dry_run=True):
     pulse_args = {
         'applabel': label,
         'topic': topic,
-        'durable': False,
+        'durable': True,
         'user': user,
         'password': password
     }
