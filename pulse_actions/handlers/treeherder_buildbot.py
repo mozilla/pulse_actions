@@ -22,3 +22,6 @@ def on_buildbot_event(data, message, dry_run):
     # Cancel action
     elif data['action'] == 'cancel':
         make_cancel_request(repo_name, request_id, dry_run)
+
+    # We need to ack the message to remove it from our queue
+    message.ack()

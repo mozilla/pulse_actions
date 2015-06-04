@@ -4,9 +4,13 @@ Here we are going to write a listener that prints 'Hello world!' for every messa
 
 1) Add a file called `normalizedhello.py` to handlers/ containing:
 ```
+
+    # Handler functions must receive (data, message, dry_run) as arguments
     def on_build_event(data, message, dry_run):
-        # Handler functions must receive (data, message, dry_run) as arguments
         print "Hello World!"
+
+        # We need to ack the message to remove it from our pulse queue
+        message.ack()
 ```
 2) Add the following to `handlers/config.py`:
 ```
