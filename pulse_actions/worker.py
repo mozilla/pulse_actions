@@ -76,7 +76,7 @@ def main():
         exchange=options['exchange'],
         topic=options['topic'],
         event_handler=handler_function,
-        dry_run=False)
+        dry_run=True)
 
 if __name__ == '__main__':
     main()
