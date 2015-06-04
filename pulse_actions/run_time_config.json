@@ -1,4 +1,4 @@
 {
     "exchange": "exchange/treeherder/v1/job-actions",
-    "topic": "buildbot.#.#"
+    "topic": "buildbot.ash.#"
 }

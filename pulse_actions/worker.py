@@ -68,14 +68,15 @@ def main():
     try:
         handler_function = config.HANDLERS_BY_EXCHANGE[options['exchange']]["topic"][topic_base]
     except KeyError:
-        LOG.error("We don't have an event handler for %s with topic %s." % (options['exchange'], options['topic']))
+        LOG.error("We don't have an event handler for %s with topic %s."
+                  % (options['exchange'], options['topic']))
         exit(1)
 
     run_pulse(
         exchange=options['exchange'],
         topic=options['topic'],
         event_handler=handler_function,
-        dry_run=True)
+        dry_run=False)
 
 if __name__ == '__main__':
     main()
