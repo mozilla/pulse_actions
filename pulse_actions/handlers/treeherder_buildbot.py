@@ -15,13 +15,13 @@ def on_buildbot_event(data, message, dry_run):
     job_id = data['job_id']
     request_id = get_request_id_from_job_id(repo_name, job_id)
 
-    # Retrigger action
+    # Re-trigger action
     if data['action'] == 'retrigger':
-        make_retrigger_request(repo_name, request_id, dry_run)
+        make_retrigger_request(repo_name, request_id, dry_run=dry_run)
 
     # Cancel action
     elif data['action'] == 'cancel':
-        make_cancel_request(repo_name, request_id, dry_run)
+        make_cancel_request(repo_name, request_id, dry_run=dry_run)
 
     # We need to ack the message to remove it from our queue
     message.ack()
