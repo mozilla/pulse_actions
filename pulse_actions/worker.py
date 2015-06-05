@@ -27,7 +27,11 @@ class PulseConsumer(GenericConsumer):
 
 
 def run_pulse(exchange, topic, event_handler, dry_run=True):
-    """Listen to a pulse exchange in a infinite loop. Call event_handler on every message."""
+    """
+    Listen to a pulse exchange in a infinite loop.
+
+    Call event_handler on every message.
+    """
 
     label = 'pulse_actions'
     user = os.environ.get('PULSE_USER')
@@ -45,7 +49,9 @@ def run_pulse(exchange, topic, event_handler, dry_run=True):
     def handler_with_dry_run(data, message):
         return event_handler(data, message, dry_run)
 
-    pulse = PulseConsumer(exchange, callback=handler_with_dry_run, **pulse_args)
+    pulse = PulseConsumer(exchange,
+                          callback=handler_with_dry_run,
+                          **pulse_args)
     LOG.info('Listening on %s, with topic %s' % (exchange, topic))
 
     while True:
@@ -66,7 +72,8 @@ def main():
     # Finding the right event handler for the given exchange and topic
     topic_base = options['topic'].split('.')[0]
     try:
-        handler_function = config.HANDLERS_BY_EXCHANGE[options['exchange']]["topic"][topic_base]
+        handler_data = config.HANDLERS_BY_EXCHANGE[options['exchange']]
+        handler_function = handler_data["topic"][topic_base]
     except KeyError:
         LOG.error("We don't have an event handler for %s with topic %s."
                   % (options['exchange'], options['topic']))

@@ -1,5 +1,5 @@
 """
-This module provides functions to deal with exchange/treeherder/v1/job-actions on buildbot.#.#.
+This module deals with exchange/treeherder/v1/job-actions on buildbot.#.#.
 
 Exchange documentation:
  https://wiki.mozilla.org/Auto-tools/Projects/Pulse/Exchanges#Treeherder:_Job_Actions
