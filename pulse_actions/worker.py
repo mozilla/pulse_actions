@@ -2,14 +2,13 @@ import json
 import logging
 import os
 
-from handlers import config
+from pulse_actions.handlers import config
 
 from mozillapulse.config import PulseConfiguration
 from mozillapulse.consumers import GenericConsumer
 
 
-logging.basicConfig(format='%(asctime)s %(levelname)s:\t %(message)s',
-                    datefmt='%m/%d/%Y %I:%M:%S')
+logging.basicConfig(format='%(levelname)s:\t %(message)s')
 LOG = logging.getLogger()
 
 
@@ -52,7 +51,7 @@ def run_pulse(exchange, topic, event_handler, dry_run=True):
     pulse = PulseConsumer(exchange,
                           callback=handler_with_dry_run,
                           **pulse_args)
-    LOG.info('Listening on %s, with topic %s' % (exchange, topic))
+    LOG.info('Listening on %s, with topic %s', exchange, topic)
 
     while True:
         pulse.listen()
@@ -62,8 +61,8 @@ def main():
 
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(current_dir, 'run_time_config.json')
-    with open(config_path, 'r') as f:
-        options = json.load(f)
+    with open(config_path, 'r') as config_file:
+        options = json.load(config_file)
 
     LOG.setLevel(logging.INFO)
     # requests is too noisy
@@ -75,8 +74,8 @@ def main():
         handler_data = config.HANDLERS_BY_EXCHANGE[options['exchange']]
         handler_function = handler_data["topic"][topic_base]
     except KeyError:
-        LOG.error("We don't have an event handler for %s with topic %s."
-                  % (options['exchange'], options['topic']))
+        LOG.error("We don't have an event handler for %s with topic %s.",
+                  options['exchange'], options['topic'])
         exit(1)
 
     run_pulse(

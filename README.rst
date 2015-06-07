@@ -9,7 +9,7 @@ What it does
 
 * ``worker.py`` listens to ``exchange/treeherder/v1/job-actions`` in an infinite loop.
 
-* When it sees a retrigger actions it makes a retrigger request in builapi self-serve using ``make_retrigger_request`` from mozci.
+* When it sees a retrigger actions it makes a retrigger request in buildapi self-serve using ``make_retrigger_request`` from mozci.
 
 * When it sees a cancel action it makes a cancel request in buildapi self-serve using ``make_cancel_request`` from mozci.
 
@@ -54,7 +54,7 @@ If you installed globally (not recommended)::
     run-pulse-actions
 
 If you cloned the repo:
-----------------------
+-----------------------
 ::
 
    python worker.py
