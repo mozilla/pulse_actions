@@ -82,7 +82,7 @@ def main():
         exchange=options['exchange'],
         topic=options['topic'],
         event_handler=handler_function,
-        dry_run=True)
+        dry_run=False)
 
 if __name__ == '__main__':
     main()
