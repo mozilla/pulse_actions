@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 deps = [
     'mozillapulse',
-    'mozci>=0.8.0',
+    'mozci>=0.8.1',
     'requests',
 ]
 

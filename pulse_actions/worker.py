@@ -6,7 +6,7 @@ from pulse_actions.handlers import config
 
 from mozillapulse.config import PulseConfiguration
 from mozillapulse.consumers import GenericConsumer
-
+from mozci.sources.buildapi import find_all_by_status, COALESCED
 
 logging.basicConfig(format='%(levelname)s:\t %(message)s')
 LOG = logging.getLogger()
@@ -84,5 +84,12 @@ def main():
         event_handler=handler_function,
         dry_run=True)
 
+
+def main_tmp():
+    LOG.setLevel(logging.INFO)
+    # requests is too noisy
+    logging.getLogger("requests").setLevel(logging.WARNING)
+    LOG.info(find_all_by_status('mozilla-inbound', 'bcf7d4b06871', COALESCED))
+
 if __name__ == '__main__':
-    main()
+    main_tmp()
