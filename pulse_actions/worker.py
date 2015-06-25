@@ -96,6 +96,10 @@ def run_exchange_topic(topic_base, dry_run):
                   exchanges, topics)
         exit(1)
 
+    dry_run = True
+    if topic_base == 'resultset_actions':
+        dry_run = False
+
     run_pulse(
         exchanges=exchanges,
         topics=topics,
