@@ -7,4 +7,8 @@
         "exchange": "exchange/treeherder/v1/resultset-actions",
         "topic": "#.#"
     }
+    "backfilling":{
+        "exchange": "exchange/build/normalized",
+        "topic": "unittest.mozilla-inbound.#"
+    }
 }
