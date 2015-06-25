@@ -6,7 +6,6 @@ from pulse_actions.handlers import config
 
 from mozillapulse.config import PulseConfiguration
 from mozillapulse.consumers import GenericConsumer
-from mozci.sources.buildapi import find_all_by_status, COALESCED
 
 logging.basicConfig(format='%(levelname)s:\t %(message)s')
 LOG = logging.getLogger()
@@ -58,7 +57,6 @@ def run_pulse(exchange, topic, event_handler, dry_run=True):
 
 
 def main():
-
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(current_dir, 'run_time_config.json')
     with open(config_path, 'r') as config_file:
@@ -85,11 +83,5 @@ def main():
         dry_run=True)
 
 
-def main_tmp():
-    LOG.setLevel(logging.INFO)
-    # requests is too noisy
-    logging.getLogger("requests").setLevel(logging.WARNING)
-    LOG.info(find_all_by_status('mozilla-inbound', 'bcf7d4b06871', COALESCED))
-
 if __name__ == '__main__':
-    main_tmp()
+    main()
