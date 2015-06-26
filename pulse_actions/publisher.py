@@ -18,14 +18,18 @@ class ExperimentalPublisher(GenericPublisher):
             **kwargs)
 
 
-def publish_message():
-    """Publish a message to exchange/adusca/experiment."""
-    user = os.environ.get('PULSE_USER')
-    password = os.environ.get('PULSE_PW')
-    msg = GenericMessage()
-    msg.routing_parts = ['routing_part']
-    msg.set_data('something', 'thing')
-    publisher = ExperimentalPublisher(user=user, password=password)
-    publisher.publish(msg)
+class MessageHandler:
 
-publish_message()
+    def __init__(self):
+        """Create Publisher"""
+        self.user = os.environ.get('PULSE_USER')
+        self.password = os.environ.get('PULSE_PW')
+        self.publisher = ExperimentalPublisher(user=self.user, password=self.password)
+
+    def publish_message(self, data, routing_key):
+        """Publish a message to exchange/adusca/experiment."""
+        msg = GenericMessage()
+        msg.routing_parts = routing_key.split('.')
+        for key, value in data.iteritems():
+            msg.set_data(key, value)
+        self.publisher.publish(msg)
