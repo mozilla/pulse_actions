@@ -21,10 +21,10 @@ class ExperimentalPublisher(GenericPublisher):
 class MessageHandler:
 
     def __init__(self):
-        """Create Publisher"""
-        self.user = os.environ.get('PULSE_USER')
-        self.password = os.environ.get('PULSE_PW')
-        self.publisher = ExperimentalPublisher(user=self.user, password=self.password)
+        """Create Publisher."""
+        user  = os.environ.get('PULSE_USER')
+        password = os.environ.get('PULSE_PW')
+        self.publisher = ExperimentalPublisher(user=user, password=password)
 
     def publish_message(self, data, routing_key):
         """Publish a message to exchange/adusca/experiment."""
