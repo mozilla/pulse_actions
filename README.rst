@@ -57,9 +57,10 @@ If you installed globally (not recommended)::
 
 If you cloned the repo:
 -----------------------
+From the base folder of repository, run:
 ::
 
-   python worker.py
+   python pulse_actions/worker.py
 
 Adding more functionality
 =========================
