@@ -42,6 +42,8 @@ From Pypi::
 Running
 =======
 
+First you'll have to create a pulse user in https://pulse.mozilla.org . After that, you should set the PULSE_USER and PULSE_PW environment variables accordingly.
+
 If you installed with Pypi:
 ---------------------------
 
