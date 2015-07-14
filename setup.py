@@ -2,7 +2,8 @@ from setuptools import setup, find_packages
 
 deps = [
     'mozillapulse',
-    'mozci>=0.8.1',
+    'mozci>=0.11.0',
+    'treeherder-client>=1.5',
     'requests',
 ]
 
