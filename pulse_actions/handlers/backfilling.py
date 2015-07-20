@@ -13,9 +13,14 @@ This module is for the following use case:
 """
 import logging
 
-from mozci.mozci import backfill_revlist, trigger_range, query_repo_url_from_buildername
-from mozci.sources.buildapi import FAILURE
+
 from mozci.sources.pushlog import query_revision_info, query_pushid_range
+from mozci.mozci import trigger_range, trigger_job, find_backfill_revlist, \
+    query_repo_url_from_buildername
+from mozci.query_jobs import FAILURE, WARNING
+from mozci.sources import buildjson
+from mozci import query_jobs
+
 
 LOG = logging.getLogger()
 
@@ -41,6 +46,9 @@ def find_backfill_revlist(rev, max_revisions, buildername):
 
 def on_event(data, message, dry_run):
     """Automatically backfill failed jobs."""
+    # Cleaning mozci caches
+    buildjson.BUILDS_CACHE = {}
+    query_jobs.JOBS_CACHE = {}
     payload = data["payload"]
     status = payload["status"]
     buildername = payload["buildername"]
