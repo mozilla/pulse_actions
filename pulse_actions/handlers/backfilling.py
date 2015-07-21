@@ -20,28 +20,13 @@ from mozci.mozci import trigger_range, trigger_job, find_backfill_revlist, \
 from mozci.query_jobs import FAILURE, WARNING
 from mozci.sources import buildjson
 from mozci import query_jobs
-
+from mozci.utils import transfer
 
 LOG = logging.getLogger()
 
-MAX_REVISIONS = 20
-TIMES = 4
-
-
-def find_backfill_revlist(rev, max_revisions, buildername):
-    """Determine which revisions we need to trigger in order to backfill."""
-    repo_url = query_repo_url_from_buildername(buildername)
-    push_info = query_revision_info(repo_url, rev)
-    # A known bad revision
-    end_id = int(push_info["pushid"])  # newest revision
-    # The furthest we will go to find the last good job
-    # We might find a good job before that
-    start_id = end_id - max_revisions + 1
-    revlist = query_pushid_range(repo_url=repo_url,
-                                 start_id=start_id,
-                                 end_id=end_id)
-
-    return backfill_revlist(buildername, revlist)
+MAX_REVISIONS = 5
+# Use memory-saving mode
+transfer.MEMORY_SAVING_MODE = True
 
 
 def on_event(data, message, dry_run):
