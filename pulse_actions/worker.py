@@ -1,4 +1,5 @@
 import json
+import ijson.backends.yajl2 as ijson
 import logging
 import os
 
