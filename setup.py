@@ -6,7 +6,6 @@ deps = [
     'treeherder-client>=1.5',
     'ijson>=2.2',
     'requests',
-    'yajl'
 ]
 
 setup(name='pulse-actions',

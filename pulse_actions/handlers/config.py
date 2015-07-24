@@ -11,6 +11,6 @@ HANDLERS_BY_EXCHANGE = {
         "resultset_actions": treeherder_resultset.on_resultset_action_event
     },
     "exchange/build/normalized": {
-        "unittest": backfilling.on_event
+        "backfilling": backfilling.on_event
     }
 }
