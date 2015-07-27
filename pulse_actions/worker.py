@@ -3,6 +3,7 @@ import logging
 import os
 
 from pulse_actions.handlers import config
+from argparse import ArgumentParser
 
 from mozillapulse.config import PulseConfiguration
 from mozillapulse.consumers import GenericConsumer
@@ -24,14 +25,14 @@ class PulseConsumer(GenericConsumer):
             PulseConfiguration(**kwargs), exchange, **kwargs)
 
 
-def run_pulse(exchange, topic, event_handler, dry_run=True):
+def run_pulse(exchange, topic, event_handler, topic_base, dry_run=True):
     """
     Listen to a pulse exchange in a infinite loop.
 
     Call event_handler on every message.
     """
 
-    label = 'pulse_actions'
+    label = topic_base
     user = os.environ.get('PULSE_USER')
     password = os.environ.get('PULSE_PW')
     pulse_args = {
@@ -56,31 +57,52 @@ def run_pulse(exchange, topic, event_handler, dry_run=True):
         pulse.listen()
 
 
-def main():
+def load_config():
+    LOG.setLevel(logging.INFO)
+    # requests is too noisy
+    logging.getLogger("requests").setLevel(logging.WARNING)
+
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(current_dir, 'run_time_config.json')
     with open(config_path, 'r') as config_file:
         options = json.load(config_file)
 
-    LOG.setLevel(logging.INFO)
-    # requests is too noisy
-    logging.getLogger("requests").setLevel(logging.WARNING)
+    return options
 
+
+def run_exchange_topic(topic_base):
+    options = load_config()
     # Finding the right event handler for the given exchange and topic
-    topic_base = options['topic'].split('.')[0]
     try:
-        handler_data = config.HANDLERS_BY_EXCHANGE[options['exchange']]
-        handler_function = handler_data["topic"][topic_base]
+        handler_data = config.HANDLERS_BY_EXCHANGE[options[topic_base]['exchange']]
+        handler_function = handler_data[topic_base]
     except KeyError:
         LOG.error("We don't have an event handler for %s with topic %s.",
-                  options['exchange'], options['topic'])
+                  options[topic_base]['exchange'], options[topic_base]['topic'])
         exit(1)
 
     run_pulse(
-        exchange=options['exchange'],
-        topic=options['topic'],
+        exchange=options[topic_base]['exchange'],
+        topic=options[topic_base]['topic'],
         event_handler=handler_function,
+        topic_base=topic_base,
         dry_run=True)
+
+
+def parse_args(argv=None):
+    parser = ArgumentParser()
+    parser.add_argument("--topic-base",
+                        required=True,
+                        dest="topic_base",
+                        type=str,
+                        help="Identifier for exchange and topic to be listened to.")
+    options = parser.parse_args(argv)
+    return options
+
+
+def main():
+    options = parse_args()
+    run_exchange_topic(options.topic_base)
 
 
 if __name__ == '__main__':

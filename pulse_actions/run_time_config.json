@@ -1,4 +1,10 @@
 {
-    "exchange": "exchange/treeherder/v1/job-actions",
-    "topic": "buildbot.#.#"
+    "buildbot": {
+        "exchange": "exchange/treeherder/v1/job-actions",
+        "topic": "buildbot.#.#"
+    },
+    "resultset_actions": {
+        "exchange": "exchange/treeherder/v1/resultset-actions",
+        "topic": "#.#"
+    }
 }
