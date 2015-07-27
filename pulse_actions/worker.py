@@ -1,9 +1,8 @@
 import json
-import ijson.backends.yajl2 as ijson
 import logging
 import os
 
-from pulse_actions.handlers import config
+from pulse_actions.handlers import config, route_functions
 from argparse import ArgumentParser
 
 from mozillapulse.config import PulseConfiguration
@@ -26,19 +25,21 @@ class PulseConsumer(GenericConsumer):
             PulseConfiguration(**kwargs), exchange, **kwargs)
 
 
-def run_pulse(exchange, topic, event_handler, topic_base, dry_run=True):
+def run_pulse(exchanges, topics, event_handler, topic_base, dry_run):
     """
     Listen to a pulse exchange in a infinite loop.
 
     Call event_handler on every message.
     """
-
-    label = topic_base
+    if len(topic_base) == 1:
+        label = topic_base[0]
+    else:
+        label = "multiple_listeners"
     user = os.environ.get('PULSE_USER')
     password = os.environ.get('PULSE_PW')
     pulse_args = {
         'applabel': label,
-        'topic': topic,
+        'topic': topics,
         'durable': True,
         'user': user,
         'password': password
@@ -49,13 +50,16 @@ def run_pulse(exchange, topic, event_handler, topic_base, dry_run=True):
     def handler_with_dry_run(data, message):
         return event_handler(data, message, dry_run)
 
-    pulse = PulseConsumer(exchange,
+    pulse = PulseConsumer(exchanges,
                           callback=handler_with_dry_run,
                           **pulse_args)
-    LOG.info('Listening on %s, with topic %s', exchange, topic)
+    LOG.info('Listening on %s, with topic %s', exchanges, topics)
 
     while True:
-        pulse.listen()
+        try:
+            pulse.listen()
+        except Exception as e:
+            LOG.info("Error: %s" % e)
 
 
 def load_config():
@@ -71,23 +75,33 @@ def load_config():
     return options
 
 
-def run_exchange_topic(topic_base):
+def run_exchange_topic(topic_base, dry_run):
     options = load_config()
+    topic_base = topic_base.split(",")
+    exchanges = []
+    topics = []
+    for topic in topic_base:
+        exchange = options[topic]['exchange']
+        exchanges.append(exchange)
+        topics.append(options[topic]['topic'])
     # Finding the right event handler for the given exchange and topic
     try:
-        handler_data = config.HANDLERS_BY_EXCHANGE[options[topic_base]['exchange']]
-        handler_function = handler_data[topic_base]
+        if len(topic_base) == 1:
+            handler_data = config.HANDLERS_BY_EXCHANGE[exchanges[0]]
+            handler_function = handler_data[topic_base[0]]
+        else:
+            handler_function = route_functions.route
     except KeyError:
         LOG.error("We don't have an event handler for %s with topic %s.",
-                  options[topic_base]['exchange'], options[topic_base]['topic'])
+                  exchanges, topics)
         exit(1)
 
     run_pulse(
-        exchange=options[topic_base]['exchange'],
-        topic=options[topic_base]['topic'],
+        exchanges=exchanges,
+        topics=topics,
         event_handler=handler_function,
         topic_base=topic_base,
-        dry_run=False)
+        dry_run=dry_run)
 
 
 def parse_args(argv=None):
@@ -97,13 +111,17 @@ def parse_args(argv=None):
                         dest="topic_base",
                         type=str,
                         help="Identifier for exchange and topic to be listened to.")
+    parser.add_argument("--dry-run",
+                        action="store_true",
+                        dest="dry_run",
+                        help="flag to test without actual push.")
     options = parser.parse_args(argv)
     return options
 
 
 def main():
     options = parse_args()
-    run_exchange_topic(options.topic_base)
+    run_exchange_topic(options.topic_base, options.dry_run)
 
 
 if __name__ == '__main__':
