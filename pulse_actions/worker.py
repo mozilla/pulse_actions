@@ -87,7 +87,7 @@ def run_exchange_topic(topic_base):
         topic=options[topic_base]['topic'],
         event_handler=handler_function,
         topic_base=topic_base,
-        dry_run=True)
+        dry_run=False)
 
 
 def parse_args(argv=None):
