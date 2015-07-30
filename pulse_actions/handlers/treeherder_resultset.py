@@ -1,6 +1,10 @@
+import logging
 from mozci.mozci import trigger_missing_jobs_for_revision, trigger_all_talos_jobs
 from thclient import TreeherderClient
 from pulse_actions.publisher import MessageHandler
+
+logging.basicConfig(format='%(levelname)s:\t %(message)s')
+LOG = logging.getLogger()
 MEMORY_SAVING_MODE = True
 
 def on_resultset_action_event(data, message, dry_run):
@@ -14,12 +18,14 @@ def on_resultset_action_event(data, message, dry_run):
     status = None
 
     if action == "trigger_missing_jobs":
+        LOG.info("trigger_missing_jobs requested by %s" % data["requester"])
         trigger_missing_jobs_for_revision(repo_name, revision, dry_run=dry_run)
         if not dry_run:
             status = 'trigger_missing_jobs request sent'
         else:
             status = 'Dry-mode, no request sent'
     elif action == "trigger_all_talos_jobs":
+        LOG.info("trigger_all_talos_jobs requested by %s" % data["requester"])
         trigger_all_talos_jobs(repo_name, revision, times, dry_run=dry_run)
         if not dry_run:
             status = 'trigger_all_talos_jobs %s times request sent' % times
