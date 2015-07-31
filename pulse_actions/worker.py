@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import traceback
 
 from pulse_actions.handlers import config, route_functions
 from argparse import ArgumentParser
@@ -59,7 +60,7 @@ def run_pulse(exchanges, topics, event_handler, topic_base, dry_run):
         try:
             pulse.listen()
         except Exception as e:
-            LOG.info("Error: %s" % e)
+            traceback.print_exc()
 
 
 def load_config():

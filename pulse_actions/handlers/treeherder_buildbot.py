@@ -21,7 +21,14 @@ def on_buildbot_event(data, message, dry_run):
     treeherder_client = TreeherderClient()
     repo_name = data['project']
     job_id = data['job_id']
-    result = treeherder_client.get_jobs(repo_name, id=job_id)[0]
+    result = treeherder_client.get_jobs(repo_name, id=job_id)
+    # If result not found, ignore
+    if not result:
+        LOG.info("We could not find any result for repo_name: %s and job_id: %s" % (repo_name, job_id))
+        message.ack()
+        return
+
+    result = result[0]
     buildername = result["ref_data_name"]
     resultset_id = result["result_set_id"]
     revision = treeherder_client.get_resultsets(repo_name, id=resultset_id)[0]["revision"]
