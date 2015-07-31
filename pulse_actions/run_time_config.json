@@ -1,7 +1,7 @@
 {
-    "buildbot": {
+    "manual_backfill": {
         "exchange": "exchange/treeherder/v1/job-actions",
-        "topic": "buildbot.#.#"
+        "topic": "buildbot.#.backfill"
     },
     "resultset_actions": {
         "exchange": "exchange/treeherder/v1/resultset-actions",

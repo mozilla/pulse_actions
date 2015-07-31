@@ -5,7 +5,7 @@ import pulse_actions.handlers.backfilling as backfilling
 
 HANDLERS_BY_EXCHANGE = {
     "exchange/treeherder/v1/job-actions": {
-        "buildbot": treeherder_buildbot.on_buildbot_event
+        "manual_backfill": treeherder_buildbot.on_buildbot_event
     },
     "exchange/treeherder/v1/resultset-actions": {
         "resultset_actions": treeherder_resultset.on_resultset_action_event
