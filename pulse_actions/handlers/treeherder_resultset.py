@@ -14,18 +14,22 @@ def on_resultset_action_event(data, message, dry_run):
     # Pulse gives us resultset_id, we need to get revision from it.
     resultset_id = data["resultset_id"]
     treeherder_client = TreeherderClient()
+    # We do not handle 'cancel_all' action right now, so skip it.
+    if action == "cancel_all":
+        message.ack()
+        return
+    LOG.info("%s action requested by %s on repo_name %s with resultset_id: %s" %
+                (data['action'], data["requester"], data["project"], data["resultset_id"]))
     revision = treeherder_client.get_resultsets(repo_name, id=resultset_id)[0]["revision"]
     status = None
 
     if action == "trigger_missing_jobs":
-        LOG.info("trigger_missing_jobs requested by %s" % data["requester"])
         trigger_missing_jobs_for_revision(repo_name, revision, dry_run=dry_run)
         if not dry_run:
             status = 'trigger_missing_jobs request sent'
         else:
             status = 'Dry-mode, no request sent'
     elif action == "trigger_all_talos_jobs":
-        LOG.info("trigger_all_talos_jobs requested by %s" % data["requester"])
         trigger_all_talos_jobs(repo_name, revision, times, dry_run=dry_run)
         if not dry_run:
             status = 'trigger_all_talos_jobs %s times request sent' % times
