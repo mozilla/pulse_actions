@@ -35,7 +35,7 @@ def run_pulse(exchanges, topics, event_handler, topic_base, dry_run):
     if len(topic_base) == 1:
         label = topic_base[0]
     else:
-        label = "multiple_listeners"
+        label = str(topic_base)
     user = os.environ.get('PULSE_USER')
     password = os.environ.get('PULSE_PW')
     pulse_args = {
