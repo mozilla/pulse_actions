@@ -7,6 +7,8 @@ Exchange documentation:
 import logging
 from mozci.mozci import manual_backfill
 from pulse_actions.utils.treeherder import get_request_id_from_job_id
+from mozci.sources import buildjson
+from mozci import query_jobs
 from thclient import TreeherderClient
 
 from pulse_actions.publisher import MessageHandler
@@ -18,6 +20,11 @@ LOG = logging.getLogger()
 def on_buildbot_event(data, message, dry_run):
     """Act upon buildbot events."""
     # Pulse gives us a job_id and a job_guid, we need request_id.
+    LOG.info("%s action requested by %s on repo_name %s with job_id: %s" %
+                (data['action'], data["requester"], data["project"], data["job_id"]))
+    # Cleaning mozci caches
+    buildjson.BUILDS_CACHE = {}
+    query_jobs.JOBS_CACHE = {}
     treeherder_client = TreeherderClient()
     repo_name = data['project']
     job_id = data['job_id']
@@ -37,7 +44,6 @@ def on_buildbot_event(data, message, dry_run):
 
     # Backfill action
     if action == "backfill":
-        LOG.info("Backfill requested by %s" % data["requester"])
         manual_backfill(revision, buildername, max_revisions=5, dry_run=dry_run)
         if not dry_run:
             status = 'Backfill request sent'
