@@ -1,6 +1,8 @@
 import logging
 from mozci.mozci import trigger_missing_jobs_for_revision, trigger_all_talos_jobs
 from thclient import TreeherderClient
+from mozci.sources import buildjson
+from mozci import query_jobs
 from pulse_actions.publisher import MessageHandler
 
 logging.basicConfig(format='%(levelname)s:\t %(message)s')
@@ -8,6 +10,9 @@ LOG = logging.getLogger()
 MEMORY_SAVING_MODE = True
 
 def on_resultset_action_event(data, message, dry_run):
+    # Cleaning mozci caches
+    buildjson.BUILDS_CACHE = {}
+    query_jobs.JOBS_CACHE = {}
     repo_name = data["project"]
     action = data["action"]
     times = data["times"]
