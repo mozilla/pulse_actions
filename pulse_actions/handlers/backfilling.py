@@ -44,11 +44,12 @@ def on_event(data, message, dry_run):
                  revision, buildername)
 
         # We want to have 2 jobs for the current revision
-        trigger_job(
-            buildername=buildername,
-            revision=revision,
-            times=2,
-            dry_run=dry_run)
+        # Commented for now, we might want
+        # trigger_job(
+        #     buildername=buildername,
+        #     revision=revision,
+        #     times=2,
+        #     dry_run=dry_run)
 
         # We want to assure 1 apperance of each job on the past revisions
         repo_url = query_repo_url_from_buildername(buildername)
