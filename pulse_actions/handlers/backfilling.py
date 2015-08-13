@@ -46,7 +46,7 @@ def on_event(data, message, dry_run):
         # We want to have 2 jobs for the current revision
         trigger_range(
             buildername=buildername,
-            revision=[revision],
+            revisions=[revision],
             times=2,
             dry_run=dry_run)
 
