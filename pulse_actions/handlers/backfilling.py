@@ -29,6 +29,9 @@ transfer.MEMORY_SAVING_MODE = True
 
 def on_event(data, message, dry_run):
     """Automatically backfill failed jobs."""
+    # We need to ack the message to remove it from our queue
+    message.ack()
+
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
@@ -69,6 +72,3 @@ def on_event(data, message, dry_run):
         # TODO: change this to debug after a testing period
         LOG.info("'%s' with status %i. Nothing to be done.",
                  buildername, status)
-
-    # We need to ack the message to remove it from our queue
-    message.ack()
