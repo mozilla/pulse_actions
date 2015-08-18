@@ -46,14 +46,7 @@ def on_event(data, message, dry_run):
         LOG.info("Failed job found at revision %s. Buildername: %s",
                  revision, buildername)
 
-        # We want to have 2 jobs for the current revision
-        trigger_range(
-            buildername=buildername,
-            revisions=[revision],
-            times=2,
-            dry_run=dry_run)
-
-        # We want to assure 1 apperance of each job on the past revisions
+        # We want to assure 1 appearance of the job on each of the revisions
         repo_url = query_repo_url_from_buildername(buildername)
         revlist = find_backfill_revlist(
             repo_url=repo_url,
