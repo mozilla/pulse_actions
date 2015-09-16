@@ -1,7 +1,11 @@
 import json
 import logging
 import os
+import sys
 import traceback
+
+from pulse_actions.authentication import (get_user_and_password,
+    AuthenticationError)
 
 from pulse_actions.handlers import config, route_functions
 from argparse import ArgumentParser
@@ -36,8 +40,12 @@ def run_pulse(exchanges, topics, event_handler, topic_base, dry_run):
         label = topic_base[0]
     else:
         label = str(topic_base)
-    user = os.environ.get('PULSE_USER')
-    password = os.environ.get('PULSE_PW')
+    try:
+        user, password = get_user_and_password()
+    except AuthenticationError as e:
+        print(e.message)
+        sys.exit(1)
+
     pulse_args = {
         'applabel': label,
         'topic': topics,

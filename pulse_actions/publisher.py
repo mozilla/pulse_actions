@@ -4,6 +4,10 @@ This module is currently an experiment in publishing messages to pulse.
 It might become a real pulse publisher one day.
 """
 import os
+import sys
+
+from pulse_actions.authentication import (get_user_and_password,
+    AuthenticationError)
 
 from mozillapulse.publishers import GenericPublisher
 from mozillapulse.config import PulseConfiguration
@@ -22,8 +26,11 @@ class MessageHandler:
 
     def __init__(self):
         """Create Publisher."""
-        user  = os.environ.get('PULSE_USER')
-        password = os.environ.get('PULSE_PW')
+        try:
+            user, password = get_user_and_password()
+        except AuthenticationError as e:
+            print(e.message)
+            sys.exit(1)
         self.publisher = ExperimentalPublisher(user=user, password=password)
 
     def publish_message(self, data, routing_key):
