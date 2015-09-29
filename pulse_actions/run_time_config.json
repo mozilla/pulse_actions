@@ -15,8 +15,12 @@
         "exchange": "exchange/treeherder-stage/v1/resultset-actions",
         "topic": "#.#"
     },
-    "backfilling":{
+    "backfilling": {
         "exchange": "exchange/build/normalized",
         "topic": "unittest.mozilla-inbound.#"
+    },
+    "runnable": {
+        "exchange": "exchange/treeherder/v1/resultset-runnable-job-actions",
+        "topic": "#"
     }
 }
