@@ -67,7 +67,7 @@ def run_pulse(exchanges, topics, event_handler, topic_base, dry_run):
     while True:
         try:
             pulse.listen()
-        except Exception as e:
+        except:
             traceback.print_exc()
 
 
