@@ -7,8 +7,14 @@ HANDLERS_BY_EXCHANGE = {
     "exchange/treeherder/v1/job-actions": {
         "manual_backfill": treeherder_buildbot.on_buildbot_event
     },
+    "exchange/treeherder-stage/v1/job-actions": {
+        "manual_backfill-stage": treeherder_buildbot.on_buildbot_event
+    },
     "exchange/treeherder/v1/resultset-actions": {
         "resultset_actions": treeherder_resultset.on_resultset_action_event
+    },
+    "exchange/treeherder-stage/v1/resultset-actions": {
+        "resultset_actions-stage": treeherder_resultset.on_resultset_action_event
     },
     "exchange/build/normalized": {
         "backfilling": backfilling.on_event
