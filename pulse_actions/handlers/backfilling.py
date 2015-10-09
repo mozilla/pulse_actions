@@ -36,8 +36,11 @@ def on_event(data, message, dry_run):
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
     payload = data["payload"]
-    status = payload["status"]
-    buildername = payload["buildername"]
+    status = payload.get("status")
+    if not status:
+        LOG.warning("DEBUG_THIS")
+        LOG.info(payload)
+    buildername = payload.get("buildername")
 
     # Backfill a failed job
     if status in [FAILURE, WARNING]:
@@ -62,6 +65,5 @@ def on_event(data, message, dry_run):
             trigger_build_if_missing=False
         )
     else:
-        # TODO: change this to debug after a testing period
-        LOG.info("'%s' with status %i. Nothing to be done.",
+        LOG.debug("'%s' with status %i. Nothing to be done.",
                  buildername, status)
