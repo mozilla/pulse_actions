@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 deps = [
     'ijson==2.2',
     'mozci==0.15.1',
-    'MozillaPulse==1.2.1',
+    'MozillaPulse==1.2.2',
     'requests==2.7.0', # Maximum version taskcluster will work with
     'taskcluster==0.0.27',
     'treeherder-client==1.7.0',
