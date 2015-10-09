@@ -59,6 +59,7 @@ def run_pulse(exchanges, topics, event_handler, topic_base, dry_run):
     def handler_with_dry_run(data, message):
         # Skip heartbeats until current issue is gone
         if data.get('payload') and data['payload'].get('what') == 'This is a heartbeat':
+            message.ack()
             return
         return event_handler(data, message, dry_run)
 
