@@ -11,4 +11,4 @@ def route(data, message, dry_run):
     elif 'resultset_id' in data:
         treeherder_resultset.on_resultset_action_event(data, message, dry_run)
     else:
-        LOG.error("Exchange not supported by router.")
+        LOG.error("Exchange not supported by router (%s)." % data)
