@@ -1,13 +1,8 @@
+import os
 from setuptools import setup, find_packages
 
-deps = [
-    'ijson==2.2',
-    'mozci==0.16.0',
-    'MozillaPulse==1.2.2',
-    'requests==2.7.0',
-    'taskcluster==0.0.29',
-    'treeherder-client==1.7.0',
-]
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
 
 setup(name='pulse-actions',
       version='0.2.2',
@@ -25,8 +20,8 @@ setup(name='pulse-actions',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      install_requires=deps,
-      url='https://github.com/adusca/pulse_actions',
+      install_requires=required,
+      url='https://github.com/armenzg/pulse_actions',
       entry_points={
           'console_scripts': [
               'run-pulse-actions = pulse_actions.worker:main'
