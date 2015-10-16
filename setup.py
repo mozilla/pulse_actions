@@ -2,15 +2,15 @@ from setuptools import setup, find_packages
 
 deps = [
     'ijson==2.2',
-    'mozci==0.15.1',
+    'mozci==0.16.0',
     'MozillaPulse==1.2.2',
-    'requests==2.7.0', # Maximum version taskcluster will work with
-    'taskcluster==0.0.27',
+    'requests==2.7.0',
+    'taskcluster==0.0.29',
     'treeherder-client==1.7.0',
 ]
 
 setup(name='pulse-actions',
-      version='0.2.1',
+      version='0.2.2',
       description='A pulse listener that acts upon messages with mozci.',
       classifiers=['Intended Audience :: Developers',
                    'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
