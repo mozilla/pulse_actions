@@ -2,28 +2,26 @@
 Pulse Actions
 =============
 
-This project is a Pulse_ listener that listens to Treeherder's job cancellation and retrigger actions in ``exchange/treeherder/v1/job-actions`` and acts upon them.
+This project is a Pulse_ listener that connects different parts of Mozilla with Mozilla CI Tools. See the wiki_ for more details.
 
-What it does
+
+How it works
 ============
-
-* ``worker.py`` listens to ``exchange/treeherder/v1/job-actions`` in an infinite loop.
-
-* When it sees a retrigger actions it makes a retrigger request in buildapi self-serve using ``make_retrigger_request`` from mozci.
-
-* When it sees a cancel action it makes a cancel request in buildapi self-serve using ``make_cancel_request`` from mozci.
-
-* Currently everything is run with ``dry_run=True``, so instead of doing requests the script just logs the requests it would have made.
-
-
-Current status
-==============
 
 * ``worker.py`` reads exchange and topic from ``run_time_config.json``. It then uses ``HANDLERS_BY_EXCHANGE``, a dictionary defined in ``config.py`` to decide what function it will use to handle incoming messages.
 
-* Only buildbot topics (e.g. ``buildbot.#.#`` or ``buildbot.try.retrigger``) in ``exchange/treeherder/v1/job-actions`` are supported for now.
+* The functions to deal with every case are defined in the ``handlers`` module.
 
-* The functions to deal with Treeherder's job-actions are defined in the module ``treeherderactions.py``
+* When multiple topics are passed, we use the ``route_functions.py`` to decide which function to call
+
+Existing modes
+==============
+
+* manual_backfill: listens to ``exchange/treeherder/v1/job-actions`` with topic ``buildbot.#.backfill``. It calls mozci's ``manual_backfill`` with the appropriate input.
+
+* backfilling: listens to ``exchange/build/normalized`` with topic ``unittest.mozilla-inbound.#``. It automatically backfills failed jobs. Currently it is only running on dry-run mode. Progress in being tracked on bug 1180732_
+
+* resulset_actions: listens to ``exchange/treeherder/v1/resultset-actions``. It calls mozci's ``trigger_missing_jobs`` or ``trigger_all_talos_jobs`` depending on the message.
 
 
 Installing
@@ -31,7 +29,7 @@ Installing
 
 From GitHub::
 
-    git clone https://github.com/adusca/pulse_actions.git
+    git clone https://github.com/mozilla/pulse_actions.git
     cd pulse_actions
     python setup.py develop
 
@@ -60,12 +58,14 @@ If you cloned the repo:
 From the base folder of repository, run:
 ::
 
-   python pulse_actions/worker.py
+   python pulse_actions/worker.py --topic-base MODE
+
+Where MODE is a comma-separated list of the modes you in which you wish to run.
 
 Adding more functionality
 =========================
 
-The main goal of this project is to act upon messages from  ``exchange/treeherder/v1/job-actions``, but it can be expanded to add more functionality. Here_ is a step-by-step guide for creating a "Hello World" client with pulse_actions.
+Pulse Actions can be expanded to add more functionality. Here_ is a step-by-step guide for creating a "Hello World" client with pulse_actions.
 
 
 Requirements
@@ -74,8 +74,8 @@ Requirements
 * mozci
 * mozillapulse
 
-See bug 1168148_ for more details.
 
 .. _Pulse: https://wiki.mozilla.org/Auto-tools/Projects/Pulse
-.. _1168148: https://bugzilla.mozilla.org/show_bug.cgi?id=1168148
+.. _1180732: https://bugzilla.mozilla.org/show_bug.cgi?id=1180732
+.. _wiki: https://wiki.mozilla.org/Auto-tools/Projects/Pulse_actions
 .. _Here: https://github.com/adusca/pulse_actions/blob/master/hello_world.md
