@@ -21,7 +21,7 @@ setup(name='pulse-actions',
       include_package_data=True,
       zip_safe=False,
       install_requires=required,
-      url='https://github.com/armenzg/pulse_actions',
+      url='https://github.com/mozilla/pulse_actions',
       entry_points={
           'console_scripts': [
               'run-pulse-actions = pulse_actions.worker:main'
