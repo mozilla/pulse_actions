@@ -57,10 +57,6 @@ def run_pulse(exchanges, topics, event_handler, topic_base, dry_run):
     # Pulse consumer's callback passes only data and message arguments
     # to the function, we need to pass dry-run
     def handler_with_dry_run(data, message):
-        # Skip heartbeats until current issue is gone
-        if data.get('payload') and data['payload'].get('what') == 'This is a heartbeat':
-            message.ack()
-            return
         return event_handler(data, message, dry_run)
 
     pulse = PulseConsumer(exchanges,
@@ -95,10 +91,12 @@ def run_exchange_topic(topic_base, dry_run):
     topic_base = topic_base.split(",")
     exchanges = []
     topics = []
+
     for topic in topic_base:
         exchange = options[topic]['exchange']
         exchanges.append(exchange)
         topics.append(options[topic]['topic'])
+
     # Finding the right event handler for the given exchange and topic
     try:
         if len(topic_base) == 1:

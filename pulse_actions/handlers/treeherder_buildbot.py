@@ -1,14 +1,15 @@
 """
-This module deals with exchange/treeherder/v1/job-actions on buildbot.#.#.
+This module deals with Treeherder's job-actions exchanges.
 
+- exchange/treeherder/v1/job-actions on buildbot.#.#.
+- exchange/treeherder-stage/v1/job-actions on buildbot.#.#.
 Exchange documentation:
  https://wiki.mozilla.org/Auto-tools/Projects/Pulse/Exchanges#Treeherder:_Job_Actions
 """
 import logging
-from mozci.mozci import manual_backfill
-from pulse_actions.utils.treeherder import get_request_id_from_job_id
-from mozci.sources import buildjson
 from mozci import query_jobs
+from mozci.mozci import manual_backfill
+from mozci.sources import buildjson
 from thclient import TreeherderClient
 
 from pulse_actions.publisher import MessageHandler
@@ -17,7 +18,17 @@ logging.basicConfig(format='%(levelname)s:\t %(message)s')
 LOG = logging.getLogger()
 
 
-def on_buildbot_event(data, message, dry_run):
+def on_buildbot_prod_event(data, message, dry_run):
+    """Act upon events on the production exchange"""
+    return on_buildbot_event(data, message, dry_run, stage=False)
+
+
+def on_buildbot_stage_event(data, message, dry_run):
+    """Act upon events on the stage exchange"""
+    return on_buildbot_event(data, message, dry_run, stage=True)
+
+
+def on_buildbot_event(data, message, dry_run, stage):
     """Act upon buildbot events."""
     # Pulse gives us a job_id and a job_guid, we need request_id.
     LOG.info("%s action requested by %s on repo_name %s with job_id: %s" %
@@ -25,7 +36,11 @@ def on_buildbot_event(data, message, dry_run):
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
-    treeherder_client = TreeherderClient()
+
+    if stage:
+        treeherder_client = TreeherderClient(host='treeherder.allizom.org')
+    else:
+        treeherder_client = TreeherderClient()
     repo_name = data['project']
     job_id = data['job_id']
     result = treeherder_client.get_jobs(repo_name, id=job_id)
@@ -49,6 +64,7 @@ def on_buildbot_event(data, message, dry_run):
             status = 'Backfill request sent'
         else:
             status = 'Dry-run mode, nothing was backfilled'
+
     # Send a pulse message showing what we did
     message_sender = MessageHandler()
     pulse_message = {
