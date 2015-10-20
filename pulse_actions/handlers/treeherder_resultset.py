@@ -9,7 +9,16 @@ logging.basicConfig(format='%(levelname)s:\t %(message)s')
 LOG = logging.getLogger()
 MEMORY_SAVING_MODE = True
 
-def on_resultset_action_event(data, message, dry_run):
+
+def on_resultset_action_prod_event(data, message, dry_run):
+    return on_resultset_action_event(data, message, dry_run, stage=False)
+
+
+def on_resultset_action_stage_event(data, message, dry_run):
+    return on_resultset_action_event(data, message, dry_run, stage=True)
+
+
+def on_resultset_action_event(data, message, dry_run, stage):
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
@@ -18,7 +27,12 @@ def on_resultset_action_event(data, message, dry_run):
     times = data["times"]
     # Pulse gives us resultset_id, we need to get revision from it.
     resultset_id = data["resultset_id"]
-    treeherder_client = TreeherderClient()
+
+    if stage:
+        treeherder_client = TreeherderClient(host='treeherder.allizom.org')
+    else:
+        treeherder_client = TreeherderClient()
+
     # We do not handle 'cancel_all' action right now, so skip it.
     if action == "cancel_all":
         message.ack()
@@ -40,6 +54,7 @@ def on_resultset_action_event(data, message, dry_run):
             status = 'trigger_all_talos_jobs %s times request sent' % times
         else:
             status = 'Dry-mode, no request sent'
+
     # Send a pulse message showing what we did
     message_sender = MessageHandler()
     pulse_message = {
