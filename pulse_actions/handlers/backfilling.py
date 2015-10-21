@@ -22,7 +22,10 @@ from mozci.utils import transfer
 
 LOG = logging.getLogger()
 
-MAX_REVISIONS = 5
+# Current SETA skip level defined in here:
+# http://mxr.mozilla.org/build/source/buildbot-configs/mozilla-tests/config_seta.py#9
+# XXX: Fix hardcoding in https://github.com/mozilla/pulse_actions/issues/29
+MAX_REVISIONS = 7
 # Use memory-saving mode
 transfer.MEMORY_SAVING_MODE = True
 
