@@ -37,8 +37,12 @@ def on_resultset_action_event(data, message, dry_run, stage=False):
     if action == "cancel_all":
         message.ack()
         return
-    LOG.info("%s action requested by %s on repo_name %s with resultset_id: %s" %
-                (data['action'], data["requester"], data["project"], data["resultset_id"]))
+    LOG.info("%s action requested by %s on repo_name %s with resultset_id: %s" % (
+        data['action'],
+        data["requester"],
+        data["project"],
+        data["resultset_id"])
+    )
     revision = treeherder_client.get_resultsets(repo_name, id=resultset_id)[0]["revision"]
     status = None
 

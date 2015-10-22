@@ -5,6 +5,7 @@ import logging
 logging.basicConfig(format='%(levelname)s:\t %(message)s')
 LOG = logging.getLogger()
 
+
 def route(data, message, dry_run):
     if 'job_id' in data:
         treeherder_buildbot.on_buildbot_event(data, message, dry_run)

@@ -13,8 +13,11 @@ This module is for the following use case:
 """
 import logging
 
-from mozci.mozci import trigger_range, trigger_job, find_backfill_revlist, \
-    query_repo_url_from_buildername
+from mozci.mozci import (
+    find_backfill_revlist,
+    query_repo_url_from_buildername,
+    trigger_range,
+)
 from mozci.query_jobs import FAILURE, WARNING
 from mozci.sources import buildjson
 from mozci import query_jobs

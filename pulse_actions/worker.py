@@ -4,11 +4,13 @@ import os
 import sys
 import traceback
 
-from pulse_actions.authentication import (get_user_and_password,
-    AuthenticationError)
-
-from pulse_actions.handlers import config, route_functions
 from argparse import ArgumentParser
+
+from pulse_actions.authentication import (
+    AuthenticationError,
+    get_user_and_password,
+)
+from pulse_actions.handlers import config, route_functions
 
 from mozillapulse.config import PulseConfiguration
 from mozillapulse.consumers import GenericConsumer

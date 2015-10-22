@@ -16,6 +16,7 @@ from pulse_actions.publisher import MessageHandler
 
 logging.basicConfig(format='%(levelname)s:\t %(message)s')
 LOG = logging.getLogger()
+MAX_REVISIONS = 7
 
 
 def on_buildbot_prod_event(data, message, dry_run):
@@ -31,8 +32,12 @@ def on_buildbot_stage_event(data, message, dry_run):
 def on_buildbot_event(data, message, dry_run, stage=False):
     """Act upon buildbot events."""
     # Pulse gives us a job_id and a job_guid, we need request_id.
-    LOG.info("%s action requested by %s on repo_name %s with job_id: %s" %
-                (data['action'], data["requester"], data["project"], data["job_id"]))
+    LOG.info("%s action requested by %s on repo_name %s with job_id: %s" % (
+        data['action'],
+        data["requester"],
+        data["project"],
+        data["job_id"])
+    )
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
@@ -46,20 +51,27 @@ def on_buildbot_event(data, message, dry_run, stage=False):
     result = treeherder_client.get_jobs(repo_name, id=job_id)
     # If result not found, ignore
     if not result:
-        LOG.info("We could not find any result for repo_name: %s and job_id: %s" % (repo_name, job_id))
+        LOG.info("We could not find any result for repo_name: %s and "
+                 "job_id: %s" % (repo_name, job_id))
         message.ack()
         return
 
     result = result[0]
     buildername = result["ref_data_name"]
     resultset_id = result["result_set_id"]
-    revision = treeherder_client.get_resultsets(repo_name, id=resultset_id)[0]["revision"]
+    result_sets = treeherder_client.get_resultsets(repo_name, id=resultset_id)
+    revision = result_sets[0]["revision"]
     action = data['action']
     status = None
 
     # Backfill action
     if action == "backfill":
-        manual_backfill(revision, buildername, max_revisions=5, dry_run=dry_run)
+        manual_backfill(
+            revision,
+            buildername,
+            max_revisions=MAX_REVISIONS,
+            dry_run=dry_run
+        )
         if not dry_run:
             status = 'Backfill request sent'
         else:

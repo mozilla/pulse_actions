@@ -3,11 +3,12 @@ This module is currently an experiment in publishing messages to pulse.
 
 It might become a real pulse publisher one day.
 """
-import os
 import sys
 
-from pulse_actions.authentication import (get_user_and_password,
-    AuthenticationError)
+from pulse_actions.authentication import (
+    AuthenticationError,
+    get_user_and_password,
+)
 
 from mozillapulse.publishers import GenericPublisher
 from mozillapulse.config import PulseConfiguration
