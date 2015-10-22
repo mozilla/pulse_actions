@@ -28,7 +28,7 @@ def on_buildbot_stage_event(data, message, dry_run):
     return on_buildbot_event(data, message, dry_run, stage=True)
 
 
-def on_buildbot_event(data, message, dry_run, stage):
+def on_buildbot_event(data, message, dry_run, stage=False):
     """Act upon buildbot events."""
     # Pulse gives us a job_id and a job_guid, we need request_id.
     LOG.info("%s action requested by %s on repo_name %s with job_id: %s" %

@@ -18,7 +18,7 @@ def on_resultset_action_stage_event(data, message, dry_run):
     return on_resultset_action_event(data, message, dry_run, stage=True)
 
 
-def on_resultset_action_event(data, message, dry_run, stage):
+def on_resultset_action_event(data, message, dry_run, stage=False):
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
