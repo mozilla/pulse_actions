@@ -1,3 +1,8 @@
+
+.. image:: https://travis-ci.org/mozilla/pulse_actions.svg?branch=master
+    :target: https://travis-ci.org/mozilla/pulse_actions
+    :alt: Travis-CI Build Status
+
 =============
 Pulse Actions
 =============
