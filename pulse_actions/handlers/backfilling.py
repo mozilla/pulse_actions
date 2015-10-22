@@ -15,7 +15,6 @@ import logging
 
 from mozci.mozci import (
     find_backfill_revlist,
-    query_repo_url_from_buildername,
     trigger_range,
 )
 from mozci.query_jobs import FAILURE, WARNING
@@ -52,10 +51,8 @@ def on_event(data, message, dry_run):
         LOG.info("Failed job found at revision %s. Buildername: %s",
                  revision, buildername)
 
-        # We want to assure 1 appearance of the job on each of the revisions
-        repo_url = query_repo_url_from_buildername(buildername)
+        # We want to ensure 1 appearance of the job on every revision
         revlist = find_backfill_revlist(
-            repo_url=repo_url,
             revision=revision,
             max_revisions=MAX_REVISIONS,
             buildername=buildername)
@@ -68,6 +65,5 @@ def on_event(data, message, dry_run):
             trigger_build_if_missing=False
         )
     else:
-        # TODO: change this to debug after a testing period
-        LOG.info("'%s' with status %i. Nothing to be done.",
-                 buildername, status)
+        LOG.debug("'%s' with status %i. Nothing to be done.",
+                  buildername, status)
