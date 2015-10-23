@@ -14,7 +14,6 @@ from thclient import TreeherderClient
 
 from pulse_actions.publisher import MessageHandler
 
-logging.basicConfig(format='%(levelname)s:\t %(message)s')
 LOG = logging.getLogger()
 MAX_REVISIONS = 7
 

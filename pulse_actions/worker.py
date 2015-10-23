@@ -15,8 +15,7 @@ from pulse_actions.handlers import config, route_functions
 from mozillapulse.config import PulseConfiguration
 from mozillapulse.consumers import GenericConsumer
 
-logging.basicConfig(format='%(levelname)s:\t %(message)s')
-LOG = logging.getLogger()
+LOG = None
 
 
 class PulseConsumer(GenericConsumer):
@@ -75,11 +74,28 @@ def run_pulse(exchanges, topics, event_handler, topic_base, dry_run):
             traceback.print_exc()
 
 
-def load_config():
-    LOG.setLevel(logging.INFO)
+def setup_logging(logging_level):
+    global LOG
+    if LOG:
+        return LOG
+    # Let's use the root logger
+    LOG = logging.getLogger()
+
+    if logging_level == logging.DEBUG:
+        format = '%(asctime)s %(name)s %(levelname)s:\t %(message)s'
+    else:
+        format = '%(levelname)s:\t %(message)s'
+
+    logging.basicConfig(format=format, datefmt='%H:%M:%S')
+    LOG.setLevel(logging_level)
+
+    LOG.info("Setting %s level" % logging.getLevelName(logging_level))
+
     # requests is too noisy
     logging.getLogger("requests").setLevel(logging.WARNING)
 
+
+def load_config():
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(current_dir, 'run_time_config.json')
     with open(config_path, 'r') as config_file:
@@ -126,16 +142,29 @@ def parse_args(argv=None):
                         dest="topic_base",
                         type=str,
                         help="Identifier for exchange and topic to be listened to.")
+
     parser.add_argument("--dry-run",
                         action="store_true",
                         dest="dry_run",
                         help="flag to test without actual push.")
+
+    parser.add_argument("--debug",
+                        action="store_true",
+                        dest="debug",
+                        help="set debug for logging.")
+
     options = parser.parse_args(argv)
     return options
 
 
 def main():
     options = parse_args()
+
+    if options.debug:
+        setup_logging(logging.DEBUG)
+    else:
+        setup_logging(logging.INFO)
+
     run_exchange_topic(options.topic_base, options.dry_run)
 
 
