@@ -6,7 +6,7 @@ httplib2==0.9.2
 ijson==2.2
 keyring==5.4
 kombu==3.0.26
-mozci==0.16.0
+mozci==0.17.0
 MozillaPulse==1.2.2
 oauth2==1.9.0.post1
 progressbar==2.3
