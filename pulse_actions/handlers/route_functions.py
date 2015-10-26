@@ -2,7 +2,6 @@ import pulse_actions.handlers.treeherder_buildbot as treeherder_buildbot
 import pulse_actions.handlers.treeherder_resultset as treeherder_resultset
 import logging
 
-logging.basicConfig(format='%(levelname)s:\t %(message)s')
 LOG = logging.getLogger()
 
 

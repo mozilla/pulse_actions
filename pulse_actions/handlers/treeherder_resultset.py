@@ -1,13 +1,16 @@
 import logging
-from mozci.mozci import trigger_missing_jobs_for_revision, trigger_all_talos_jobs
-from thclient import TreeherderClient
-from mozci.sources import buildjson
+
 from mozci import query_jobs
+from mozci.mozci import trigger_missing_jobs_for_revision, trigger_all_talos_jobs
+from mozci.sources import buildjson
+from mozci.utils import transfer
+from thclient import TreeherderClient
 from pulse_actions.publisher import MessageHandler
 
-logging.basicConfig(format='%(levelname)s:\t %(message)s')
 LOG = logging.getLogger()
-MEMORY_SAVING_MODE = True
+# This changes the behaviour of mozci in transfer.py
+transfer.MEMORY_SAVING_MODE = True
+transfer.SHOW_PROGRESS_BAR = False
 
 
 def on_resultset_action_prod_event(data, message, dry_run):

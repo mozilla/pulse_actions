@@ -13,13 +13,14 @@ This module is for the following use case:
 """
 import logging
 
+from mozci import query_jobs
 from mozci.mozci import (
+    disable_validations,
     find_backfill_revlist,
     trigger_range,
 )
 from mozci.query_jobs import FAILURE, WARNING
 from mozci.sources import buildjson
-from mozci import query_jobs
 from mozci.utils import transfer
 
 LOG = logging.getLogger()
@@ -28,7 +29,7 @@ LOG = logging.getLogger()
 # http://mxr.mozilla.org/build/source/buildbot-configs/mozilla-tests/config_seta.py#9
 # XXX: Fix hardcoding in https://github.com/mozilla/pulse_actions/issues/29
 MAX_REVISIONS = 7
-# Use memory-saving mode
+# This changes the behaviour of mozci in transfer.py
 transfer.MEMORY_SAVING_MODE = True
 
 
@@ -36,6 +37,10 @@ def on_event(data, message, dry_run):
     """Automatically backfill failed jobs."""
     # We need to ack the message to remove it from our queue
     message.ack()
+
+    # Disable mozci's validations
+    # XXX: We only to call this once but for now we will put it here
+    disable_validations()
 
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
