@@ -12,8 +12,13 @@ from pulse_actions.authentication import (
 )
 from pulse_actions.handlers import config, route_functions
 
+from mozci.mozci import disable_validations
+from mozci.utils import transfer
 from mozillapulse.config import PulseConfiguration
 from mozillapulse.consumers import GenericConsumer
+# This changes the behaviour of mozci in transfer.py
+transfer.MEMORY_SAVING_MODE = True
+transfer.SHOW_PROGRESS_BAR = False
 
 LOG = None
 
@@ -164,6 +169,9 @@ def main():
         setup_logging(logging.DEBUG)
     else:
         setup_logging(logging.INFO)
+
+    # Disable mozci's validations
+    disable_validations()
 
     run_exchange_topic(options.topic_base, options.dry_run)
 
