@@ -15,13 +15,13 @@ import logging
 
 from mozci import query_jobs
 from mozci.mozci import (
-    disable_validations,
     find_backfill_revlist,
     trigger_range,
 )
 from mozci.query_jobs import FAILURE, WARNING
 from mozci.sources import buildjson
-from mozci.utils import transfer
+
+from requests.exceptions import ConnectionError
 
 LOG = logging.getLogger()
 
@@ -29,19 +29,10 @@ LOG = logging.getLogger()
 # http://mxr.mozilla.org/build/source/buildbot-configs/mozilla-tests/config_seta.py#9
 # XXX: Fix hardcoding in https://github.com/mozilla/pulse_actions/issues/29
 MAX_REVISIONS = 7
-# This changes the behaviour of mozci in transfer.py
-transfer.MEMORY_SAVING_MODE = True
 
 
 def on_event(data, message, dry_run):
     """Automatically backfill failed jobs."""
-    # We need to ack the message to remove it from our queue
-    message.ack()
-
-    # Disable mozci's validations
-    # XXX: We only to call this once but for now we will put it here
-    disable_validations()
-
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
@@ -56,19 +47,33 @@ def on_event(data, message, dry_run):
         LOG.info("Failed job found at revision %s. Buildername: %s",
                  revision, buildername)
 
-        # We want to ensure 1 appearance of the job on every revision
-        revlist = find_backfill_revlist(
-            revision=revision,
-            max_revisions=MAX_REVISIONS,
-            buildername=buildername)
+        try:
+            # We want to ensure 1 appearance of the job on every revision
+            revlist = find_backfill_revlist(
+                revision=revision,
+                max_revisions=MAX_REVISIONS,
+                buildername=buildername)
 
-        trigger_range(
-            buildername=buildername,
-            revisions=revlist[1:],
-            times=1,
-            dry_run=dry_run,
-            trigger_build_if_missing=False
-        )
+            trigger_range(
+                buildername=buildername,
+                revisions=revlist[1:],
+                times=1,
+                dry_run=dry_run,
+                trigger_build_if_missing=False
+            )
+            # We need to ack the message to remove it from our queue
+            message.ack()
+
+        except ConnectionError:
+            # The message has not been acked so we will try again
+            LOG.warning("Connection error. Trying again")
+
+        except Except, e:
+            # The message has not been acked so we will try again
+            LOG.warning(str(e))
+            raise
     else:
+        # We need to ack the message to remove it from our queue
+        message.ack()
         LOG.debug("'%s' with status %i. Nothing to be done.",
                   buildername, status)

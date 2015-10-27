@@ -7,14 +7,15 @@ Exchange documentation:
  https://wiki.mozilla.org/Auto-tools/Projects/Pulse/Exchanges#Treeherder:_Job_Actions
 """
 import logging
+
 from mozci import query_jobs
 from mozci.mozci import manual_backfill
 from mozci.sources import buildjson
 from thclient import TreeherderClient
-
 from pulse_actions.publisher import MessageHandler
 
 LOG = logging.getLogger()
+# XXX: This has to be the same as SETA's skip level
 MAX_REVISIONS = 7
 
 

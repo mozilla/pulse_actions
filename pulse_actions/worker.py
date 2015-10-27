@@ -12,8 +12,13 @@ from pulse_actions.authentication import (
 )
 from pulse_actions.handlers import config, route_functions
 
+from mozci.mozci import disable_validations
+from mozci.utils import transfer
 from mozillapulse.config import PulseConfiguration
 from mozillapulse.consumers import GenericConsumer
+# This changes the behaviour of mozci in transfer.py
+transfer.MEMORY_SAVING_MODE = True
+transfer.SHOW_PROGRESS_BAR = False
 
 LOG = None
 
@@ -80,19 +85,35 @@ def setup_logging(logging_level):
         return LOG
     # Let's use the root logger
     LOG = logging.getLogger()
+    LOG.setLevel(logging.DEBUG)
 
-    if logging_level == logging.DEBUG:
-        format = '%(asctime)s %(name)s %(levelname)s:\t %(message)s'
-    else:
-        format = '%(levelname)s:\t %(message)s'
+    format = '%(asctime)s %(name)s\t %(levelname)s:\t %(message)s'
+    formatter = logging.Formatter(format, datefmt='%H:%M:%S')
+    # Handler 1 - Store all INFO messages in a specific file
+    # This logging.txt file will *only* show messages for that same day as Heroku
+    # dynos restart every day - Use papertrail for more details.
+    fh = logging.FileHandler('logging.txt')
+    fh.setLevel(logging.INFO)
+    fh.setFormatter(formatter)
+    LOG.addHandler(fh)
 
-    logging.basicConfig(format=format, datefmt='%H:%M:%S')
-    LOG.setLevel(logging_level)
+    # Handler 2 - Store all DEBUG messages in a specific file
+    fh = logging.FileHandler('logging_debug.txt')
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(formatter)
+    LOG.addHandler(fh)
 
-    LOG.info("Setting %s level" % logging.getLevelName(logging_level))
+    # Handler 3 - Output to console (this is the output for Papertrail)
+    console = logging.StreamHandler()
+    console.setLevel(logging_level)
+    console.setFormatter(formatter)
+    LOG.addHandler(console)
 
-    # requests is too noisy
+    LOG.info("Console output logs %s level messages." % logging.getLevelName(logging_level))
+
+    # Reduce logging for other noisy modules
     logging.getLogger("requests").setLevel(logging.WARNING)
+    logging.getLogger("amqp").setLevel(logging.WARNING)
 
 
 def load_config():
@@ -164,6 +185,9 @@ def main():
         setup_logging(logging.DEBUG)
     else:
         setup_logging(logging.INFO)
+
+    # Disable mozci's validations
+    disable_validations()
 
     run_exchange_topic(options.topic_base, options.dry_run)
 
