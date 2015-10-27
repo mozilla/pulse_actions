@@ -13,17 +13,23 @@ This module is for the following use case:
 """
 import logging
 
-from mozci.mozci import trigger_range, trigger_job, find_backfill_revlist, \
-    query_repo_url_from_buildername
+from mozci import query_jobs
+from mozci.mozci import (
+    disable_validations,
+    find_backfill_revlist,
+    trigger_range,
+)
 from mozci.query_jobs import FAILURE, WARNING
 from mozci.sources import buildjson
-from mozci import query_jobs
 from mozci.utils import transfer
 
 LOG = logging.getLogger()
 
-MAX_REVISIONS = 5
-# Use memory-saving mode
+# Current SETA skip level defined in here:
+# http://mxr.mozilla.org/build/source/buildbot-configs/mozilla-tests/config_seta.py#9
+# XXX: Fix hardcoding in https://github.com/mozilla/pulse_actions/issues/29
+MAX_REVISIONS = 7
+# This changes the behaviour of mozci in transfer.py
 transfer.MEMORY_SAVING_MODE = True
 
 
@@ -31,6 +37,10 @@ def on_event(data, message, dry_run):
     """Automatically backfill failed jobs."""
     # We need to ack the message to remove it from our queue
     message.ack()
+
+    # Disable mozci's validations
+    # XXX: We only to call this once but for now we will put it here
+    disable_validations()
 
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
@@ -46,10 +56,8 @@ def on_event(data, message, dry_run):
         LOG.info("Failed job found at revision %s. Buildername: %s",
                  revision, buildername)
 
-        # We want to assure 1 appearance of the job on each of the revisions
-        repo_url = query_repo_url_from_buildername(buildername)
+        # We want to ensure 1 appearance of the job on every revision
         revlist = find_backfill_revlist(
-            repo_url=repo_url,
             revision=revision,
             max_revisions=MAX_REVISIONS,
             buildername=buildername)
@@ -62,6 +70,5 @@ def on_event(data, message, dry_run):
             trigger_build_if_missing=False
         )
     else:
-        # TODO: change this to debug after a testing period
-        LOG.info("'%s' with status %i. Nothing to be done.",
-                 buildername, status)
+        LOG.debug("'%s' with status %i. Nothing to be done.",
+                  buildername, status)

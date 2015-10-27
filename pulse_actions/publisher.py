@@ -7,7 +7,7 @@ import sys
 
 from pulse_actions.authentication import (
     get_user_and_password,
-    AuthenticationError
+    AuthenticationError,
 )
 
 from mozillapulse.publishers import GenericPublisher

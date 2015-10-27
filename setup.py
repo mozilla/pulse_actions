@@ -1,16 +1,10 @@
 from setuptools import setup, find_packages
 
-deps = [
-    'ijson==2.2',
-    'mozci==0.15.1',
-    'MozillaPulse==1.2.2',
-    'requests==2.7.0', # Maximum version taskcluster will work with
-    'taskcluster==0.0.27',
-    'treeherder-client==1.7.0',
-]
+with open('requirements.txt') as f:
+    required = f.read().splitlines()
 
 setup(name='pulse-actions',
-      version='0.2.0',
+      version='0.2.2',
       description='A pulse listener that acts upon messages with mozci.',
       classifiers=['Intended Audience :: Developers',
                    'License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)',
@@ -25,8 +19,8 @@ setup(name='pulse-actions',
       packages=find_packages(),
       include_package_data=True,
       zip_safe=False,
-      install_requires=deps,
-      url='https://github.com/adusca/pulse_actions',
+      install_requires=required,
+      url='https://github.com/mozilla/pulse_actions',
       entry_points={
           'console_scripts': [
               'run-pulse-actions = pulse_actions.worker:main'

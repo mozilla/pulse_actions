@@ -5,16 +5,16 @@ import pulse_actions.handlers.backfilling as backfilling
 
 HANDLERS_BY_EXCHANGE = {
     "exchange/treeherder/v1/job-actions": {
-        "manual_backfill": treeherder_buildbot.on_buildbot_event
+        "manual_backfill": treeherder_buildbot.on_buildbot_prod_event
     },
     "exchange/treeherder-stage/v1/job-actions": {
-        "manual_backfill-stage": treeherder_buildbot.on_buildbot_event
+        "manual_backfill-stage": treeherder_buildbot.on_buildbot_stage_event
     },
     "exchange/treeherder/v1/resultset-actions": {
-        "resultset_actions": treeherder_resultset.on_resultset_action_event
+        "resultset_actions": treeherder_resultset.on_resultset_action_prod_event
     },
     "exchange/treeherder-stage/v1/resultset-actions": {
-        "resultset_actions-stage": treeherder_resultset.on_resultset_action_event
+        "resultset_actions-stage": treeherder_resultset.on_resultset_action_stage_event
     },
     "exchange/build/normalized": {
         "backfilling": backfilling.on_event
