@@ -68,7 +68,7 @@ def on_event(data, message, dry_run):
             # The message has not been acked so we will try again
             LOG.warning("Connection error. Trying again")
 
-        except Except, e:
+        except Exception, e:
             # The message has not been acked so we will try again
             LOG.warning(str(e))
             raise
