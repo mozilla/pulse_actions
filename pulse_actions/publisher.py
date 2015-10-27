@@ -19,7 +19,7 @@ class ExperimentalPublisher(GenericPublisher):
     def __init__(self, user, **kwargs):
         super(ExperimentalPublisher, self).__init__(
             PulseConfiguration(**kwargs),
-            'exchange/%s/pulse_actions' % pulse_user,
+            'exchange/%s/pulse_actions' % user,
             **kwargs)
 
 
