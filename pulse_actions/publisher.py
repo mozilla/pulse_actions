@@ -3,7 +3,6 @@ This module is currently an experiment in publishing messages to pulse.
 
 It might become a real pulse publisher one day.
 """
-import os
 import sys
 
 from pulse_actions.authentication import (
@@ -17,10 +16,10 @@ from mozillapulse.messages.base import GenericMessage
 
 
 class ExperimentalPublisher(GenericPublisher):
-    def __init__(self, **kwargs):
+    def __init__(self, user, **kwargs):
         super(ExperimentalPublisher, self).__init__(
             PulseConfiguration(**kwargs),
-            'exchange/adusca/experiment',
+            'exchange/%s/pulse_actions' % pulse_user,
             **kwargs)
 
 
@@ -30,20 +29,20 @@ class MessageHandler:
         """Create Publisher."""
         try:
             user, password = get_user_and_password()
+            self.publisher = ExperimentalPublisher(
+                user=user, password=password)
         except AuthenticationError as e:
             print(e.message)
             sys.exit(1)
-
-        self.publisher = ExperimentalPublisher(user=user, password=password)
+        except Exception as e:
+            # We continue without posting to pulse
+            print('ERROR: We failed to post a pulse message with what we did')
+            print(e.message)
 
     def publish_message(self, data, routing_key):
-        """Publish a message to exchange/adusca/experiment."""
+        """Publish a message to exchange/${pulse_user}/pulse_actions."""
         msg = GenericMessage()
         msg.routing_parts = routing_key.split('.')
         for key, value in data.iteritems():
             msg.set_data(key, value)
-        try:
-            self.publisher.publish(msg)
-        except Exception as e:
-            print('ERROR: We failed to post a pulse message with what we did')
-            print(e.message)
+        self.publisher.publish(msg)
