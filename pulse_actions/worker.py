@@ -106,6 +106,7 @@ def setup_logging(logging_level):
     # Handler 3 - Output to console (this is the output for Papertrail)
     console = logging.StreamHandler()
     console.setLevel(logging_level)
+    formatter = logging.Formatter('%(name)s\t %(levelname)s:\t %(message)s')
     console.setFormatter(formatter)
     LOG.addHandler(console)
 
