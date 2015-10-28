@@ -1,4 +1,3 @@
-
 .. image:: https://travis-ci.org/mozilla/pulse_actions.svg?branch=master
     :target: https://travis-ci.org/mozilla/pulse_actions
     :alt: Travis-CI Build Status
@@ -24,7 +23,7 @@ Existing modes
 
 * manual_backfill: listens to ``exchange/treeherder/v1/job-actions`` with topic ``buildbot.#.backfill``. It calls mozci's ``manual_backfill`` with the appropriate input.
 
-* backfilling: listens to ``exchange/build/normalized`` with topic ``unittest.mozilla-inbound.#``. It automatically backfills failed jobs. Currently it is only running on dry-run mode. Progress in being tracked on bug 1180732_
+* backfilling: listens to ``exchange/build/normalized`` with topic ``unittest.mozilla-inbound.#``. It automatically backfills failed jobs. Progress in being tracked on bug 1180732_
 
 * resulset_actions: listens to ``exchange/treeherder/v1/resultset-actions``. It calls mozci's ``trigger_missing_jobs`` or ``trigger_all_talos_jobs`` depending on the message.
 
