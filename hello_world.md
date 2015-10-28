@@ -21,16 +21,16 @@ In config.py, also add a new key in `HANDLERS_BY_EXCHANGE`:
 
 ```
     "exchange/build/normalized": {
-        "topic": {
-            "#": normalizedhello.on_build_event
+        "hello":  normalizedhello.on_build_event
         }
-    }
 ```
-3) Replace the content of `run_time_config.json` with:
+
+3) Add the following key to `run_time_config.json`:
 ```
-    {
+    "hello": {
         "exchange": "exchange/build/normalized",
         "topic": "#"
     }
 ```
-4) And we are done! To run, just type `run-pulse-actions`.
+
+4) And we are done! To run, just type `run-pulse-actions --topic-base=hello`.
