@@ -12,7 +12,7 @@ def route(data, message, dry_run):
     if 'job_id' in data:
         treeherder_buildbot.on_buildbot_event(data, message, dry_run)
     elif 'buildernames' in data:
-        treeherder_runnable.on_runnable_job_event(data, message, dry_run)
+        treeherder_runnable.on_runnable_job_prod_event(data, message, dry_run)
     elif 'resultset_id' in data:
         treeherder_resultset.on_resultset_action_event(data, message, dry_run)
     else:

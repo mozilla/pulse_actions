@@ -22,5 +22,10 @@
     "runnable": {
         "exchange": "exchange/treeherder/v1/resultset-runnable-job-actions",
         "topic": "#"
+    },
+    "runnable-stage": {
+        "exchange": "exchange/treeherder-stage/v1/resultset-runnable-job-actions",
+        "topic": "#"
     }
+
 }

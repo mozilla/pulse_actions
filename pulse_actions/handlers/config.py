@@ -18,7 +18,10 @@ HANDLERS_BY_EXCHANGE = {
         "resultset_actions-stage": treeherder_resultset.on_resultset_action_stage_event
     },
     "exchange/treeherder/v1/resultset-runnable-job-actions": {
-        "runnable": treeherder_runnable.on_runnable_job_event
+        "runnable": treeherder_runnable.on_runnable_job_prod_event
+    },
+    "exchange/treeherder-stage/v1/resultset-runnable-job-actions": {
+        "runnable-stage": treeherder_runnable.on_runnable_job_stage_event
     },
     "exchange/build/normalized": {
         "backfilling": backfilling.on_event
