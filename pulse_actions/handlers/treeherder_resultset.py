@@ -1,7 +1,8 @@
 import logging
 
 from mozci import query_jobs
-from mozci.mozci import trigger_missing_jobs_for_revision, trigger_all_talos_jobs
+from mozci.mozci import trigger_all_talos_jobs
+from mozci.ci_manager import BuildAPIManager
 from mozci.sources import buildjson
 from thclient import TreeherderClient
 from pulse_actions.publisher import MessageHandler
@@ -46,7 +47,8 @@ def on_resultset_action_event(data, message, dry_run, stage=False):
     status = None
 
     if action == "trigger_missing_jobs":
-        trigger_missing_jobs_for_revision(repo_name, revision, dry_run=dry_run)
+        mgr = BuildAPIManager()
+        mgr.trigger_missing_jobs_for_revision(repo_name, revision, dry_run=dry_run)
         if not dry_run:
             status = 'trigger_missing_jobs request sent'
         else:
