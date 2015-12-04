@@ -2,6 +2,7 @@ import logging
 
 from mozci.ci_manager import TaskClusterBuildbotManager
 from mozci.sources import buildjson, buildbot_bridge
+from mozci.mozci import trigger_job
 from mozci import query_jobs
 from thclient import TreeherderClient
 from pulse_actions.publisher import MessageHandler
@@ -59,12 +60,18 @@ def on_runnable_job_event(data, message, dry_run, stage):
         raise Exception("Requester %s is not allowed to trigger jobs." %
                         requester)
 
-    builders_graph = buildbot_bridge.buildbot_graph_builder(buildernames, revision)
+    builders_graph, ready = buildbot_bridge.buildbot_graph_builder(buildernames,
+                                                                   revision,
+                                                                   complete=False)
+
     mgr.schedule_graph(
         repo_name=repo_name,
         revision=revision,
         builders_graph=builders_graph,
         dry_run=dry_run)
+
+    for buildername in ready:
+        trigger_job(revision, buildername)
 
     # Send a pulse message showing what we did
     message_sender = MessageHandler()
