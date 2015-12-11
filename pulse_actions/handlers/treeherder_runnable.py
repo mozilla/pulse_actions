@@ -20,6 +20,10 @@ def on_runnable_job_prod_event(data, message, dry_run):
     return on_runnable_job_event(data, message, dry_run, stage=False)
 
 
+def _whitelisted_users(author):
+    return author in ('philringnalda@gmail.com', 'nigelbabu@gmail.com')
+
+
 def on_runnable_job_event(data, message, dry_run, stage):
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
@@ -46,7 +50,8 @@ def on_runnable_job_event(data, message, dry_run, stage):
     message_sender = MessageHandler()
     # Everyone can press the button, but only authorized users can trigger jobs
     # TODO: remove this when proper LDAP identication is set up on TH
-    if author != requester and not requester.endswith('@mozilla.com'):
+    if author != requester and not (requester.endswith('@mozilla.com') or
+                                    _whitelisted_users(author)):
         message.ack()
 
         # We publish a message saying we will not trigger the job
