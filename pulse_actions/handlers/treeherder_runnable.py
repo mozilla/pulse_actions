@@ -20,8 +20,8 @@ def on_runnable_job_prod_event(data, message, dry_run):
     return on_runnable_job_event(data, message, dry_run, stage=False)
 
 
-def _whitelisted_users(author):
-    return author in ('philringnalda@gmail.com', 'nigelbabu@gmail.com')
+def _whitelisted_users(requester):
+    return requester in ('philringnalda@gmail.com', 'nigelbabu@gmail.com')
 
 
 def on_runnable_job_event(data, message, dry_run, stage):
@@ -51,7 +51,7 @@ def on_runnable_job_event(data, message, dry_run, stage):
     # Everyone can press the button, but only authorized users can trigger jobs
     # TODO: remove this when proper LDAP identication is set up on TH
     if author != requester and not (requester.endswith('@mozilla.com') or
-                                    _whitelisted_users(author)):
+                                    _whitelisted_users(requester)):
         message.ack()
 
         # We publish a message saying we will not trigger the job
