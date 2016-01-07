@@ -54,9 +54,16 @@ def on_resultset_action_event(data, message, dry_run, stage=False):
         else:
             status = 'Dry-mode, no request sent'
     elif action == "trigger_all_talos_jobs":
-        trigger_all_talos_jobs(repo_name, revision, times, dry_run=dry_run)
+        trigger_all_talos_jobs(
+            repo_name=repo_name,
+            revision=revision,
+            times=times,
+            priority=-1,
+            dry_run=dry_run
+        )
         if not dry_run:
-            status = 'trigger_all_talos_jobs %s times request sent' % times
+            status = 'trigger_all_talos_jobs: {0} times request sent with priority'\
+                     'lower then normal'.format(times)
         else:
             status = 'Dry-mode, no request sent'
 
