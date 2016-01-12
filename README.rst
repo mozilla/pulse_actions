@@ -1,6 +1,9 @@
 .. image:: https://travis-ci.org/mozilla/pulse_actions.svg?branch=master
     :target: https://travis-ci.org/mozilla/pulse_actions
     :alt: Travis-CI Build Status
+.. image:: https://requires.io/github/mozilla/pulse_actions/requirements.svg?branch=master
+     :target: https://requires.io/github/mozilla/pulse_actions/requirements/?branch=master
+     :alt: Requirements Status
 
 =============
 Pulse Actions
