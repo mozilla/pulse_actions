@@ -50,7 +50,7 @@ def on_runnable_job_event(data, message, dry_run, stage):
     message_sender = MessageHandler()
     # Everyone can press the button, but only authorized users can trigger jobs
     # TODO: remove this when proper LDAP identication is set up on TH
-    if author != requester or not _whitelisted_users(requester)):
+    if author != requester or not _whitelisted_users(requester):
         message.ack()
 
         # We publish a message saying we will not trigger the job
@@ -71,8 +71,13 @@ def on_runnable_job_event(data, message, dry_run, stage):
     mgr.schedule_graph(
         repo_name=repo_name,
         revision=revision,
-        requester=requester,
-        description='Adding new jobs to push via pulse_actions/treeherder for %s.' % requester,
+        metadata={
+            'name': 'pulse_actions_graph',
+            'description':
+                'Adding new jobs to push via pulse_actions/treeherder for %s.' % requester,
+            'owner': requester,
+            'source': revision,
+        },
         builders_graph=builders_graph,
         dry_run=dry_run)
 

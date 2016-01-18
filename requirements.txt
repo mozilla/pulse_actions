@@ -5,7 +5,7 @@ bugsy==0.6.0
 ijson==2.2
 keyring==5.4
 kombu==3.0.26
-mozci==0.25.0
+mozci==0.24.2
 MozillaPulse==1.2.2
 progressbar==2.3
 PyHawk-with-a-single-extra-commit==0.1.5
