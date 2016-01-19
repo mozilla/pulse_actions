@@ -1,4 +1,3 @@
-import copy
 import logging
 
 from mozci import query_jobs
@@ -41,7 +40,6 @@ def on_runnable_job_event(data, message, dry_run, stage):
     resultset_id = data["resultset_id"]
     buildernames = data["buildernames"]
 
-
     resultset = treeherder_client.get_resultsets(repo_name, id=resultset_id)[0]
     revision = resultset["revision"]
     author = resultset["author"]
@@ -55,11 +53,8 @@ def on_runnable_job_event(data, message, dry_run, stage):
     message_sender = MessageHandler()
     # Everyone can press the button, but only authorized users can trigger jobs
     # TODO: remove this when proper LDAP identication is set up on TH
-    if not (
-        requester.endswith('@mozilla.com') or \
-        author == requester or \
-        _whitelisted_users(requester)):
-
+    if not (requester.endswith('@mozilla.com') or author == requester or
+            _whitelisted_users(requester)):
         # Remove message from pulse queue
         message.ack()
 
@@ -75,7 +70,7 @@ def on_runnable_job_event(data, message, dry_run, stage):
             LOG.error("Failed to publish message over pulse stream.")
 
         LOG.error("Requester %s is not allowed to trigger jobs." % requester)
-        return # Raising an exception adds too much noise
+        return  # Raising an exception adds too much noise
 
     # Discard invalid builders
     # Until https://github.com/mozilla/mozilla_ci_tools/issues/423 is fixed
@@ -91,7 +86,7 @@ def on_runnable_job_event(data, message, dry_run, stage):
     builders_graph, other_builders_to_schedule = buildbot_bridge.buildbot_graph_builder(
         builders=buildernames,
         revision=revision,
-        complete=False # XXX: This can be removed when BBB is in use
+        complete=False  # XXX: This can be removed when BBB is in use
     )
 
     if builders_graph != {}:
@@ -113,7 +108,8 @@ def on_runnable_job_event(data, message, dry_run, stage):
 
     if other_builders_to_schedule:
         # XXX: We should be able to replace this once all Buildbot jobs run through BBB
-        # XXX: There might be a work around with https://github.com/mozilla/mozilla_ci_tools/issues/424
+        # XXX: There might be a work around with
+        #      https://github.com/mozilla/mozilla_ci_tools/issues/424
         LOG.info("We're going to schedule these builders via Buildapi: %s" %
                  str(other_builders_to_schedule))
         # This is used for test jobs which need an existing Buildbot job to be scheduled
@@ -121,7 +117,6 @@ def on_runnable_job_event(data, message, dry_run, stage):
             trigger_job(revision, buildername)
     else:
         LOG.info("We don't have anything to schedule through Buildapi")
-
 
     # Send a pulse message showing what we did
     message_sender = MessageHandler()
