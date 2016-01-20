@@ -1,21 +1,28 @@
-amqp==1.4.7
-anyjson==0.3.3
-beautifulsoup4==4.4.1
-bugsy==0.6.0
-ijson==2.2
-keyring==5.4
-kombu==3.0.26
+# Main dependencies
 mozci==0.24.2
 MozillaPulse==1.2.2
-progressbar==2.3
-PyHawk-with-a-single-extra-commit==0.1.5
+
+# Required by MozillaPulse
+amqp==1.4.7
+anyjson==0.3.3
+kombu==3.0.26
 pytz==2015.6
+
+# Required by mozci
+buildapi-client==0.3.0
+ijson==2.2
+keyring==5.4
+progressbar==2.3
+pushlog-client==0.4.0
 requests==2.7.0
-slugid==1.0.6
 taskcluster==0.0.29
 treeherder-client==2.0.1
 
-# Required by treeherder-client
-mohawk==0.3.1
+# Required by taskcluster
+PyHawk-with-a-single-extra-commit==0.1.5
 requests-hawk==1.0.0
 six==1.10.0
+slugid==1.0.6
+
+# Required by treeherder-client
+mohawk==0.3.1
