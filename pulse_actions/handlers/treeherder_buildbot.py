@@ -88,6 +88,6 @@ def on_buildbot_event(data, message, dry_run, stage=False):
     try:
         message_sender.publish_message(pulse_message, routing_key)
     except:
-        LOG.error("Failed to publish message over pulse stream.")
+        LOG.warning("Failed to publish message over pulse stream.")
     # We need to ack the message to remove it from our queue
     message.ack()

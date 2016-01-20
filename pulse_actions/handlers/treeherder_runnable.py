@@ -48,7 +48,9 @@ def on_runnable_job_event(data, message, dry_run, stage):
     treeherder_link = TREEHERDER % {'repo': repo_name, 'revision': resultset['revision']}
 
     LOG.info("New jobs requested by %s for %s" % (requester, treeherder_link))
-    LOG.info("List of builders: %s" % str(buildernames))
+    LOG.info("List of builders:")
+    for b in buildernames:
+        LOG.info("- %s" % b)
 
     message_sender = MessageHandler()
     # Everyone can press the button, but only authorized users can trigger jobs
@@ -67,7 +69,7 @@ def on_runnable_job_event(data, message, dry_run, stage):
         try:
             message_sender.publish_message(pulse_message, routing_key)
         except:
-            LOG.error("Failed to publish message over pulse stream.")
+            LOG.warning("Failed to publish message over pulse stream.")
 
         LOG.error("Requester %s is not allowed to trigger jobs." % requester)
         return  # Raising an exception adds too much noise
@@ -129,7 +131,7 @@ def on_runnable_job_event(data, message, dry_run, stage):
     try:
         message_sender.publish_message(pulse_message, routing_key)
     except:
-        LOG.error("Failed to publish message over pulse stream.")
+        LOG.warning("Failed to publish message over pulse stream.")
 
     # We need to ack the message to remove it from our queue
     message.ack()
