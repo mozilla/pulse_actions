@@ -14,7 +14,7 @@ from mozci.sources import buildjson
 from thclient import TreeherderClient
 from pulse_actions.publisher import MessageHandler
 
-LOG = logging.getLogger()
+LOG = logging.getLogger('th_buildbot')
 # XXX: This has to be the same as SETA's skip level
 MAX_REVISIONS = 7
 
@@ -85,6 +85,9 @@ def on_buildbot_event(data, message, dry_run, stage=False):
         'requester': data['requester'],
         'status': status}
     routing_key = '{}.{}'.format(repo_name, action)
-    message_sender.publish_message(pulse_message, routing_key)
+    try:
+        message_sender.publish_message(pulse_message, routing_key)
+    except:
+        LOG.error("Failed to publish message over pulse stream.")
     # We need to ack the message to remove it from our queue
     message.ack()
