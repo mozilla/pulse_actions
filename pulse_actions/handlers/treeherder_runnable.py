@@ -48,7 +48,7 @@ def on_runnable_job_event(data, message, dry_run, stage):
     treeherder_link = TREEHERDER % {'repo': repo_name, 'revision': resultset['revision']}
 
     LOG.info("New jobs requested by %s for %s" % (requester, treeherder_link))
-    LOG.debug('List of builders: %s' % str(buildernames))
+    LOG.info("List of builders: %s" % str(buildernames))
 
     message_sender = MessageHandler()
     # Everyone can press the button, but only authorized users can trigger jobs
