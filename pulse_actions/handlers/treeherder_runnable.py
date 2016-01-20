@@ -99,7 +99,7 @@ def on_runnable_job_event(data, message, dry_run, stage):
                 'description':
                     'Adding new jobs to push via pulse_actions/treeherder for %s.' % requester,
                 'owner': requester,
-                'source': revision,
+                'source': treeherder_link,
             },
             builders_graph=builders_graph,
             dry_run=dry_run)
