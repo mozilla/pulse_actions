@@ -15,25 +15,22 @@ from mozillapulse.config import PulseConfiguration
 from mozillapulse.messages.base import GenericMessage
 
 
-class ExperimentalPublisher(GenericPublisher):
-    def __init__(self, user, **kwargs):
-        super(ExperimentalPublisher, self).__init__(
-            PulseConfiguration(**kwargs),
-            'exchange/%s/pulse_actions' % user,
-            **kwargs)
-
-
 class MessageHandler:
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         """Create Publisher."""
+        user, password = get_user_and_password()
+        exchange = kwargs.get('exchange', 'exchange/%s/pulse_actions' % user)
         try:
-            user, password = get_user_and_password()
-            self.publisher = ExperimentalPublisher(
-                user=user, password=password)
+            self.publisher = GenericPublisher(
+                config=PulseConfiguration(user=user, password=password),
+                exchange=exchange
+            )
+
         except AuthenticationError as e:
             print(e.message)
             sys.exit(1)
+
         except Exception as e:
             # We continue without posting to pulse
             print('ERROR: We failed to post a pulse message with what we did')
