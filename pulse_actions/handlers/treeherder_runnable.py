@@ -21,7 +21,8 @@ def on_runnable_job_prod_event(data, message, dry_run):
 
 
 def _whitelisted_users(requester):
-    return requester in ('philringnalda@gmail.com', 'nigelbabu@gmail.com')
+    return requester in ('philringnalda@gmail.com', 'nigelbabu@gmail.com',
+                         'aryx.bugmail@gmx-topmail.de')
 
 
 def on_runnable_job_event(data, message, dry_run, stage):
