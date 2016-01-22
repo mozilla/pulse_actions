@@ -1,10 +1,12 @@
 import logging
 
+from pulse_actions.publisher import MessageHandler
+from pulse_actions.utils.misc import whitelisted_users
+
 from mozci import query_jobs
 from mozci.ci_manager import TaskClusterBuildbotManager
 from mozci.mozci import trigger_job, valid_builder
 from mozci.sources import buildjson, buildbot_bridge
-from pulse_actions.publisher import MessageHandler
 from thclient import TreeherderClient
 
 LOG = logging.getLogger('th_runnable')
@@ -18,11 +20,6 @@ def on_runnable_job_stage_event(data, message, dry_run):
 
 def on_runnable_job_prod_event(data, message, dry_run):
     return on_runnable_job_event(data, message, dry_run, stage=False)
-
-
-def _whitelisted_users(requester):
-    return requester in ('philringnalda@gmail.com', 'nigelbabu@gmail.com',
-                         'aryx.bugmail@gmx-topmail.de')
 
 
 def on_runnable_job_event(data, message, dry_run, stage):
@@ -57,7 +54,7 @@ def on_runnable_job_event(data, message, dry_run, stage):
     # Everyone can press the button, but only authorized users can trigger jobs
     # TODO: remove this when proper LDAP identication is set up on TH
     if not (requester.endswith('@mozilla.com') or author == requester or
-            _whitelisted_users(requester)):
+            whitelisted_users(requester)):
         # Remove message from pulse queue
         message.ack()
 

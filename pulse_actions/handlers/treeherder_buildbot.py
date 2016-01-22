@@ -8,11 +8,12 @@ Exchange documentation:
 """
 import logging
 
+from pulse_actions.publisher import MessageHandler
+
 from mozci import query_jobs
 from mozci.mozci import manual_backfill
 from mozci.sources import buildjson
 from thclient import TreeherderClient
-from pulse_actions.publisher import MessageHandler
 
 LOG = logging.getLogger('th_buildbot')
 # XXX: This has to be the same as SETA's skip level
