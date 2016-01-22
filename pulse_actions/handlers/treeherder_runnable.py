@@ -114,7 +114,7 @@ def on_runnable_job_event(data, message, dry_run, stage):
                  str(other_builders_to_schedule))
         # This is used for test jobs which need an existing Buildbot job to be scheduled
         for buildername in other_builders_to_schedule:
-            trigger_job(revision, buildername)
+            trigger_job(revision, buildername, dry_run=dry_run)
     else:
         LOG.info("We don't have anything to schedule through Buildapi")
 
