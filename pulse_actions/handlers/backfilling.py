@@ -13,6 +13,8 @@ This module is for the following use case:
 """
 import logging
 
+from pulse_actions.utils.misc import filter_invalid_builders
+
 from mozci import query_jobs
 from mozci.mozci import (
     find_backfill_revlist,
@@ -20,7 +22,6 @@ from mozci.mozci import (
 )
 from mozci.query_jobs import FAILURE, WARNING
 from mozci.sources import buildjson
-
 from requests.exceptions import ConnectionError
 
 LOG = logging.getLogger()
@@ -42,6 +43,16 @@ def on_event(data, message, dry_run):
 
     # Backfill a failed job
     if status in [FAILURE, WARNING]:
+        buildername = filter_invalid_builders(buildername)
+
+        # Treeherder can send us invalid builder names
+        # https://bugzilla.mozilla.org/show_bug.cgi?id=1242038
+        if buildername is None:
+            if not dry_run:
+                # We need to ack the message to remove it from our queue
+                message.ack()
+            return
+
         revision = payload["revision"]
         LOG.info("**")  # visual separator
         LOG.info("Failed job found at revision %s. Buildername: %s",

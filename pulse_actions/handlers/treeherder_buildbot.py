@@ -9,6 +9,7 @@ Exchange documentation:
 import logging
 
 from pulse_actions.publisher import MessageHandler
+from pulse_actions.utils.misc import filter_invalid_builders
 
 from mozci import query_jobs
 from mozci.mozci import manual_backfill
@@ -65,8 +66,15 @@ def on_buildbot_event(data, message, dry_run, stage=False):
     action = data['action']
     status = None
 
+    buildername = filter_invalid_builders(buildername)
+
+    # Treeherder can send us invalid builder names
+    # https://bugzilla.mozilla.org/show_bug.cgi?id=1242038
+    if buildername is None:
+        status = 'Builder %s was invalid.' % buildername[0]
+
     # Backfill action
-    if action == "backfill":
+    elif action == "backfill":
         manual_backfill(
             revision,
             buildername,

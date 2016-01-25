@@ -1,11 +1,11 @@
 import logging
 
 from pulse_actions.publisher import MessageHandler
-from pulse_actions.utils.misc import whitelisted_users
+from pulse_actions.utils.misc import whitelisted_users, filter_invalid_builders
 
 from mozci import query_jobs
 from mozci.ci_manager import TaskClusterBuildbotManager
-from mozci.mozci import trigger_job, valid_builder
+from mozci.mozci import trigger_job
 from mozci.sources import buildjson, buildbot_bridge
 from thclient import TreeherderClient
 
@@ -45,11 +45,6 @@ def on_runnable_job_event(data, message, dry_run, stage):
 
     treeherder_link = TREEHERDER % {'repo': repo_name, 'revision': resultset['revision']}
 
-    LOG.info("New jobs requested by %s for %s" % (requester, treeherder_link))
-    LOG.info("List of builders:")
-    for b in buildernames:
-        LOG.info("- %s" % b)
-
     message_sender = MessageHandler()
     # Everyone can press the button, but only authorized users can trigger jobs
     # TODO: remove this when proper LDAP identication is set up on TH
@@ -74,16 +69,20 @@ def on_runnable_job_event(data, message, dry_run, stage):
         LOG.error("Requester %s is not allowed to trigger jobs." % requester)
         return  # Raising an exception adds too much noise
 
-    # Discard invalid builders
-    # Until https://github.com/mozilla/mozilla_ci_tools/issues/423 is fixed
-    invalid_builders = []
+    LOG.info("New jobs requested by %s for %s" % (requester, treeherder_link))
+    LOG.info("List of builders:")
     for b in buildernames:
-        if not valid_builder(b):
-            invalid_builders.append(b)
-            buildernames.remove(b)
+        LOG.info("- %s" % b)
 
-    if invalid_builders:
-        LOG.info('Invalid builders: %s' % str(invalid_builders))
+    buildernames = filter_invalid_builders(buildernames)
+
+    # Treeherder can send us invalid builder names
+    # https://bugzilla.mozilla.org/show_bug.cgi?id=1242038
+    if buildernames is None:
+        if not dry_run:
+            # We need to ack the message to remove it from our queue
+            message.ack()
+        return
 
     builders_graph, other_builders_to_schedule = buildbot_bridge.buildbot_graph_builder(
         builders=buildernames,
