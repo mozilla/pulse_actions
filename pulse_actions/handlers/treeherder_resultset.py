@@ -35,7 +35,8 @@ def on_resultset_action_event(data, message, dry_run, stage=False):
 
     # We do not handle 'cancel_all' action right now, so skip it.
     if action == "cancel_all":
-        message.ack()
+        if not dry_run:
+            message.ack()
         return
     LOG.info("%s action requested by %s on repo_name %s with resultset_id: %s" % (
         data['action'],
@@ -79,5 +80,7 @@ def on_resultset_action_event(data, message, dry_run, stage=False):
         message_sender.publish_message(pulse_message, routing_key)
     except:
         LOG.warning("Failed to publish message over pulse stream.")
-    # We need to ack the message to remove it from our queue
-    message.ack()
+
+    if not dry_run:
+        # We need to ack the message to remove it from our queue
+        message.ack()

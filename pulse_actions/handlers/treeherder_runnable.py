@@ -55,8 +55,10 @@ def on_runnable_job_event(data, message, dry_run, stage):
     # TODO: remove this when proper LDAP identication is set up on TH
     if not (requester.endswith('@mozilla.com') or author == requester or
             whitelisted_users(requester)):
-        # Remove message from pulse queue
-        message.ack()
+
+        if not dry_run:
+            # Remove message from pulse queue
+            message.ack()
 
         # We publish a message saying we will not trigger the job
         pulse_message = {
@@ -131,5 +133,6 @@ def on_runnable_job_event(data, message, dry_run, stage):
     except:
         LOG.warning("Failed to publish message over pulse stream.")
 
-    # We need to ack the message to remove it from our queue
-    message.ack()
+    if not dry_run:
+        # We need to ack the message to remove it from our queue
+        message.ack()

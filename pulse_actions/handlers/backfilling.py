@@ -61,8 +61,10 @@ def on_event(data, message, dry_run):
                 dry_run=dry_run,
                 trigger_build_if_missing=False
             )
-            # We need to ack the message to remove it from our queue
-            message.ack()
+
+            if not dry_run:
+                # We need to ack the message to remove it from our queue
+                message.ack()
 
         except ConnectionError:
             # The message has not been acked so we will try again
@@ -73,7 +75,9 @@ def on_event(data, message, dry_run):
             LOG.warning(str(e))
             raise
     else:
-        # We need to ack the message to remove it from our queue
-        message.ack()
+        if not dry_run:
+            # We need to ack the message to remove it from our queue
+            message.ack()
+
         LOG.debug("'%s' with status %i. Nothing to be done.",
                   buildername, status)
