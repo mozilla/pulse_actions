@@ -14,9 +14,10 @@ BUILDERNAME_REPLACEMENTS = [
 
 def whitelisted_users(requester):
     return requester in (
-        'philringnalda@gmail.com',
+        'aleth@instantbird.org',
+        'archaeopteryx@coole-files.de',
         'nigelbabu@gmail.com',
-        'archaeopteryx@coole-files.de'
+        'philringnalda@gmail.com',
     )
 
 
