@@ -66,7 +66,8 @@ def on_runnable_job_event(data, message, dry_run, stage):
         except:
             LOG.warning("Failed to publish message over pulse stream.")
 
-        LOG.error("Requester %s is not allowed to trigger jobs." % requester)
+        LOG.error("Requester %s is not allowed to trigger jobs on %s." %
+                  (requester, treeherder_link))
         return  # Raising an exception adds too much noise
 
     LOG.info("New jobs requested by %s for %s" % (requester, treeherder_link))
