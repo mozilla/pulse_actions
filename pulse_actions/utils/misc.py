@@ -8,7 +8,8 @@ from mozci.mozci import valid_builder
 LOG = logging.getLogger(__name__)
 
 BUILDERNAME_REPLACEMENTS = [
-    ('Rev5 MacOSX Yosemite 10.10', 'Rev7 MacOSX Yosemite 10.10.5')
+    ('Rev5 MacOSX Yosemite 10.10', 'Rev7 MacOSX Yosemite 10.10.5'),
+    ('TB Rev5 MacOSX Yosemite 10.10', 'TB Rev7 MacOSX Yosemite 10.10.5'),
 ]
 
 
