@@ -7,7 +7,7 @@ from mozci.sources import buildjson
 from thclient import TreeherderClient
 from pulse_actions.publisher import MessageHandler
 
-LOG = logging.getLogger('th_resultset')
+LOG = logging.getLogger(__name__)
 
 
 def on_resultset_action_prod_event(data, message, dry_run):

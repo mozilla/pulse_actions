@@ -16,7 +16,7 @@ from mozci.mozci import manual_backfill
 from mozci.sources import buildjson
 from thclient import TreeherderClient
 
-LOG = logging.getLogger('th_buildbot')
+LOG = logging.getLogger(__name__)
 # XXX: This has to be the same as SETA's skip level
 MAX_REVISIONS = 7
 

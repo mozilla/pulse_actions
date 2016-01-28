@@ -9,7 +9,7 @@ from mozci.mozci import trigger_job
 from mozci.sources import buildjson, buildbot_bridge
 from thclient import TreeherderClient
 
-LOG = logging.getLogger('th_runnable')
+LOG = logging.getLogger(__name__)
 MEMORY_SAVING_MODE = True
 TREEHERDER = 'https://treeherder.mozilla.org/#/jobs?repo=%(repo)s&revision=%(revision)s'
 
