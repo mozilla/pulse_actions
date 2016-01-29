@@ -1,3 +1,6 @@
+''' This module analyzes the try syntax of pushes to determine how many times to schedule the test
+jobs
+'''
 import logging
 
 from pulse_actions.publisher import MessageHandler
@@ -14,14 +17,6 @@ MEMORY_SAVING_MODE = True
 TREEHERDER = 'https://treeherder.mozilla.org/#/jobs?repo=%(repo)s&revision=%(revision)s'
 
 
-def on_runnable_job_stage_event(data, message, dry_run):
-    return on_runnable_job_event(data, message, dry_run, stage=True)
-
-
-def on_runnable_job_prod_event(data, message, dry_run):
-    return on_runnable_job_event(data, message, dry_run, stage=False)
-
-
 def on_runnable_job_event(data, message, dry_run, stage):
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
@@ -32,6 +27,7 @@ def on_runnable_job_event(data, message, dry_run, stage):
     else:
         treeherder_client = TreeherderClient()
 
+    # XXX:
     # Grabbing data received over pulse
     repo_name = data["project"]
     requester = data["requester"]
@@ -112,7 +108,8 @@ def on_runnable_job_event(data, message, dry_run, stage):
         # XXX: We should be able to replace this once all Buildbot jobs run through BBB
         # XXX: There might be a work around with
         #      https://github.com/mozilla/mozilla_ci_tools/issues/424
-        LOG.info("We're going to schedule these builders via Buildapi.")
+        LOG.info("We're going to schedule these builders via Buildapi: %s" %
+                 str(other_builders_to_schedule))
         # This is used for test jobs which need an existing Buildbot job to be scheduled
         for buildername in other_builders_to_schedule:
             trigger_job(revision, buildername, dry_run=dry_run)
