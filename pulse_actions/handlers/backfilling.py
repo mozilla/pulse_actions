@@ -13,7 +13,7 @@ This module is for the following use case:
 """
 import logging
 
-from pulse_actions.utils.misc import filter_invalid_builders
+from pulse_actions.utils.misc import filter_invalid_builders, get_maxRevisions
 
 from mozci import query_jobs
 from mozci.mozci import (
@@ -25,11 +25,6 @@ from mozci.sources import buildjson
 from requests.exceptions import ConnectionError
 
 LOG = logging.getLogger()
-
-# Current SETA skip level defined in here:
-# http://mxr.mozilla.org/build/source/buildbot-configs/mozilla-tests/config_seta.py#9
-# XXX: Fix hardcoding in https://github.com/mozilla/pulse_actions/issues/29
-MAX_REVISIONS = 7
 
 
 def on_event(data, message, dry_run):
@@ -62,7 +57,7 @@ def on_event(data, message, dry_run):
             # We want to ensure 1 appearance of the job on every revision
             revlist = find_backfill_revlist(
                 revision=revision,
-                max_revisions=MAX_REVISIONS,
+                max_revisions=get_maxRevisions(buildername),
                 buildername=buildername)
 
             trigger_range(
