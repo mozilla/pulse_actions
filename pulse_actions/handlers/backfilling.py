@@ -16,6 +16,7 @@ import logging
 from pulse_actions.utils.misc import filter_invalid_builders
 
 from mozci import query_jobs
+from mozci.errors import PushlogError
 from mozci.mozci import (
     find_backfill_revlist,
     trigger_range,
@@ -80,6 +81,10 @@ def on_event(data, message, dry_run):
         except ConnectionError:
             # The message has not been acked so we will try again
             LOG.warning("Connection error. Trying again")
+
+        except PushlogError, e:
+            # Unable to retrieve pushlog data. Please check repo_url and revision specified.
+            LOG.warning(str(e))
 
         except Exception, e:
             # The message has not been acked so we will try again
