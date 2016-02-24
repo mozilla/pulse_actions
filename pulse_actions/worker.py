@@ -5,6 +5,7 @@ import sys
 import traceback
 
 from argparse import ArgumentParser
+from timeit import default_timer
 
 from pulse_actions.authentication import (
     AuthenticationError,
@@ -63,7 +64,10 @@ def run_pulse(exchanges, topics, event_handler, topic_base, dry_run):
     # Pulse consumer's callback passes only data and message arguments
     # to the function, we need to pass dry-run
     def handler_with_dry_run(data, message):
-        return event_handler(data, message, dry_run)
+        start_time = default_timer.time()
+        event_handler(data, message, dry_run)
+        elapsed_time = default_timer() - start_time
+        LOG.info('Message %s, took %s to execute', message, str(elapsed_time))
 
     pulse = PulseConsumer(exchanges,
                           callback=handler_with_dry_run,
