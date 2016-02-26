@@ -64,10 +64,10 @@ def run_pulse(exchanges, topics, event_handler, topic_base, dry_run):
     # Pulse consumer's callback passes only data and message arguments
     # to the function, we need to pass dry-run
     def handler_with_dry_run(data, message):
-        start_time = default_timer.time()
+        start_time = default_timer()
         event_handler(data, message, dry_run)
         elapsed_time = default_timer() - start_time
-        LOG.info('Message %s, took %s to execute', message, str(elapsed_time))
+        LOG.info('Message %s, took %s seconds to execute', data, str(elapsed_time))
 
     pulse = PulseConsumer(exchanges,
                           callback=handler_with_dry_run,
