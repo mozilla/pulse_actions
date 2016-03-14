@@ -26,6 +26,7 @@ def whitelisted_users(requester):
         'mozilla@digitalimagecorp.de',
         'nigelbabu@gmail.com',
         'philringnalda@gmail.com',
+        'josh@joshmatthews.net',
     )
 
 
