@@ -1,5 +1,5 @@
 # Main dependencies
-mozci==0.25.5
+mozci==0.27.1
 MozillaPulse==1.2.2
 
 # Required by MozillaPulse
