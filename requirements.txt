@@ -1,5 +1,5 @@
 # Main dependencies
-mozci==0.27.1
+mozci==0.28.0
 MozillaPulse==1.2.2
 
 # Required by MozillaPulse
@@ -15,14 +15,11 @@ keyring==7.3
 progressbar==2.3
 pushlog-client==0.4.0
 requests==2.9.1
-taskcluster==0.0.32
+taskcluster==0.2.0
 treeherder-client==2.0.1
 
 # Required by taskcluster
-PyHawk-with-a-single-extra-commit==0.1.5
-requests-hawk==1.0.0
+mohawk==0.3.2.1
+requests==2.9.1
 six==1.10.0
-slugid==1.0.6
-
-# Required by treeherder-client
-mohawk==0.3.1
+slugid==1.0.7
