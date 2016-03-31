@@ -13,7 +13,7 @@ buildapi-client==0.3.0
 ijson==2.2
 keyring==7.3
 progressbar==2.3
-pushlog-client==0.4.0
+pushlog-client==0.4.0.dev1
 requests==2.9.1
 taskcluster==0.2.0
 treeherder-client==2.0.1
