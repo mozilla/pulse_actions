@@ -15,7 +15,8 @@ BUILDERNAME_REPLACEMENTS = [
 
 
 def get_maxRevisions(buildername):
-    return get_SETA_info(buildername)
+    # We only care about how many pushes we might have skipped ([7, 3600])
+    return get_SETA_info(buildername)[0]
 
 
 def whitelisted_users(requester):
