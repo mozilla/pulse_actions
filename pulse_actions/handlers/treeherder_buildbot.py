@@ -9,7 +9,7 @@ Exchange documentation:
 import logging
 
 from pulse_actions.publisher import MessageHandler
-from pulse_actions.utils.misc import filter_invalid_builders, get_maxRevisions
+from pulse_actions.utils.misc import filter_invalid_builders
 
 from mozci import query_jobs
 from mozci.mozci import manual_backfill
@@ -74,11 +74,9 @@ def on_buildbot_event(data, message, dry_run, stage=False):
     # Backfill action
     elif action == "backfill":
         manual_backfill(
-            revision,
-            buildername,
-            # XXX: This needs to be fixed at the mozci level
-            max_revisions=int(get_maxRevisions(buildername)),
-            dry_run=dry_run
+            revision=revision,
+            buildername=buildername,
+            dry_run=dry_run,
         )
         if not dry_run:
             status = 'Backfill request sent'
