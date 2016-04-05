@@ -3,7 +3,6 @@ This module helps with functionality which is common to all handlers.
 """
 import logging
 
-from mozci.platforms import get_SETA_info
 from mozci.mozci import valid_builder
 
 LOG = logging.getLogger(__name__)
