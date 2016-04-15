@@ -1,5 +1,5 @@
 # Main dependencies
-mozci==0.29.0
+mozci==0.31.0
 MozillaPulse==1.2.2
 
 # Required by MozillaPulse
@@ -11,7 +11,7 @@ pytz==2015.7
 # Required by mozci
 buildapi-client==0.3.0
 ijson==2.2
-keyring==7.3
+keyring==6.0
 progressbar==2.3
 pushlog-client==0.4.0.dev1
 redo==1.5
