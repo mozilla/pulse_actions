@@ -19,11 +19,12 @@ def whitelisted_users(requester):
         'archaeopteryx@coole-files.de',
         'gijskruitbosch@gmail.com',
         'james@hoppipolla.co.uk',
+        'josh@joshmatthews.net',
         'mh+mozilla@glandium.org',
         'mozilla@digitalimagecorp.de',
         'nigelbabu@gmail.com',
         'philringnalda@gmail.com',
-        'josh@joshmatthews.net',
+        'ted@mielczarek.org',
     )
 
 
