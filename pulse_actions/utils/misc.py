@@ -17,6 +17,7 @@ def whitelisted_users(requester):
     return requester in (
         'aleth@instantbird.org',
         'archaeopteryx@coole-files.de',
+        'dbaron@dbaron.org',
         'gijskruitbosch@gmail.com',
         'james@hoppipolla.co.uk',
         'josh@joshmatthews.net',
