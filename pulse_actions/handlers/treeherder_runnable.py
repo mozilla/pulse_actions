@@ -2,8 +2,7 @@ import logging
 
 from pulse_actions.utils.misc import whitelisted_users, filter_invalid_builders
 
-from mozci import query_jobs
-from mozci.ci_manager import TaskClusterBuildbotManager
+from mozci import TaskClusterBuildbotManager, query_jobs
 from mozci.mozci import trigger_job
 from mozci.sources import buildjson, buildbot_bridge
 from thclient import TreeherderClient
