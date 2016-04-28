@@ -47,7 +47,7 @@ From Pypi::
 Running
 =======
 
-First you'll have to create a pulse user in https://pulse.mozilla.org . After that, you should set the PULSE_USER and PULSE_PW environment variables accordingly.
+First you'll have to create a pulse user in https://pulseguardian.mozilla.org . After that, you should set the PULSE_USER and PULSE_PW environment variables accordingly.
 
 If you installed with Pypi:
 ---------------------------
@@ -67,7 +67,7 @@ From the base folder of repository, run:
 
    python pulse_actions/worker.py --topic-base MODE
 
-Where MODE is a comma-separated list of the modes you in which you wish to run.
+Where MODE is a comma-separated list of the modes you in which you wish to run. You can see some commands in Procfile_.
 
 Adding more functionality
 =========================
@@ -86,3 +86,4 @@ Requirements
 .. _1180732: https://bugzilla.mozilla.org/show_bug.cgi?id=1180732
 .. _wiki: https://wiki.mozilla.org/Auto-tools/Projects/Pulse_actions
 .. _Here: https://github.com/adusca/pulse_actions/blob/master/hello_world.md
+.. _Procfile: https://github.com/mozilla/pulse_actions/blob/master/Procfile
