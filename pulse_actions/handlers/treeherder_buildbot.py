@@ -8,7 +8,6 @@ Exchange documentation:
 """
 import logging
 
-from pulse_actions.publisher import MessageHandler
 from pulse_actions.utils.misc import filter_invalid_builders
 
 from mozci import query_jobs
@@ -82,19 +81,7 @@ def on_buildbot_event(data, message, dry_run, stage=False):
             status = 'Backfill request sent'
         else:
             status = 'Dry-run mode, nothing was backfilled'
-
-    # Send a pulse message showing what we did
-    message_sender = MessageHandler()
-    pulse_message = {
-        'job_id': job_id,
-        'action': action,
-        'requester': data['requester'],
-        'status': status}
-    routing_key = '{}.{}'.format(repo_name, action)
-    try:
-        message_sender.publish_message(pulse_message, routing_key)
-    except:
-        LOG.warning("Failed to publish message over pulse stream.")
+        LOG.debug(status)
 
     if not dry_run:
         # We need to ack the message to remove it from our queue

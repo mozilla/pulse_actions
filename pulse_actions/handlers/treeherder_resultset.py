@@ -5,7 +5,6 @@ from mozci.mozci import trigger_all_talos_jobs
 from mozci.ci_manager import BuildAPIManager
 from mozci.sources import buildjson
 from thclient import TreeherderClient
-from pulse_actions.publisher import MessageHandler
 
 LOG = logging.getLogger(__name__)
 
@@ -54,6 +53,7 @@ def on_resultset_action_event(data, message, dry_run, stage=False):
             status = 'trigger_missing_jobs request sent'
         else:
             status = 'Dry-mode, no request sent'
+
     elif action == "trigger_all_talos_jobs":
         trigger_all_talos_jobs(
             repo_name=repo_name,
@@ -68,18 +68,7 @@ def on_resultset_action_event(data, message, dry_run, stage=False):
         else:
             status = 'Dry-mode, no request sent'
 
-    # Send a pulse message showing what we did
-    message_sender = MessageHandler()
-    pulse_message = {
-        'resultset_id': resultset_id,
-        'action': action,
-        'requester': data['requester'],
-        'status': status}
-    routing_key = '{}.{}'.format(repo_name, action)
-    try:
-        message_sender.publish_message(pulse_message, routing_key)
-    except:
-        LOG.warning("Failed to publish message over pulse stream.")
+    LOG.debug(status)
 
     if not dry_run:
         # We need to ack the message to remove it from our queue

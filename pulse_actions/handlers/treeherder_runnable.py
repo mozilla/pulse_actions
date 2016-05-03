@@ -1,6 +1,5 @@
 import logging
 
-from pulse_actions.publisher import MessageHandler
 from pulse_actions.utils.misc import whitelisted_users, filter_invalid_builders
 
 from mozci import query_jobs
@@ -41,11 +40,9 @@ def on_runnable_job_event(data, message, dry_run, stage):
     resultset = treeherder_client.get_resultsets(repo_name, id=resultset_id)[0]
     revision = resultset["revision"]
     author = resultset["author"]
-    status = None
 
     treeherder_link = TREEHERDER % {'repo': repo_name, 'revision': resultset['revision']}
 
-    message_sender = MessageHandler()
     if not (requester.endswith('@mozilla.com') or author == requester or
             whitelisted_users(requester)):
         # We want to see this in the alerts
@@ -125,19 +122,6 @@ def on_runnable_job_event(data, message, dry_run, stage):
             trigger_job(revision, buildername, dry_run=dry_run)
     else:
         LOG.info("We don't have anything to schedule through Buildapi")
-
-    # Send a pulse message showing what we did
-    message_sender = MessageHandler()
-    pulse_message = {
-        'resultset_id': resultset_id,
-        'graph': builders_graph,
-        'requester': requester,
-        'status': status}
-    routing_key = '{}.{}'.format(repo_name, 'runnable')
-    try:
-        message_sender.publish_message(pulse_message, routing_key)
-    except:
-        LOG.warning("Failed to publish message over pulse stream.")
 
     if not dry_run:
         # We need to ack the message to remove it from our queue

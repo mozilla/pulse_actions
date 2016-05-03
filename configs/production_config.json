@@ -1,0 +1,18 @@
+{
+    "applabel": "['resultset_actions', 'manual_backfill', 'runnable']",
+    "durable": "true",
+    "sources": {
+        "resultset_actions": {
+            "exchange": "exchange/treeherder/v1/resultset-actions",
+            "topic": "#.#"
+        },
+        "manual_backfill": {
+            "exchange": "exchange/treeherder/v1/job-actions",
+            "topic": "buildbot.#.backfill"
+        },
+        "runnable": {
+            "exchange": "exchange/treeherder/v1/resultset-runnable-job-actions",
+            "topic": "#"
+        }
+    }
+}

@@ -44,6 +44,12 @@ From Pypi::
 
     pip install pulse-actions
 
+Replaying sample data
+=====================
+You can have re-process sample data from real requests to re-test any new changes:
+
+    python pulse_actions/worker.py --replay-file data/sample_queue.json
+
 Running
 =======
 
@@ -73,13 +79,6 @@ Adding more functionality
 =========================
 
 Pulse Actions can be expanded to add more functionality. Here_ is a step-by-step guide for creating a "Hello World" client with pulse_actions.
-
-
-Requirements
-------------
-
-* mozci
-* mozillapulse
 
 
 .. _Pulse: https://wiki.mozilla.org/Auto-tools/Projects/Pulse

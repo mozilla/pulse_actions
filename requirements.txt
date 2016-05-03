@@ -1,8 +1,9 @@
 # Main dependencies
 mozci==0.32.1
-MozillaPulse==1.2.2
+pulse_replay==0.2.0
 
-# Required by MozillaPulse
+# Required by pulse_replay
+MozillaPulse==1.2.2
 amqp==1.4.9
 anyjson==0.3.3
 kombu==3.0.33

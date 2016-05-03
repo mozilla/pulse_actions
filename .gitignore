@@ -1,11 +1,8 @@
 *.pyc
 *.egg-info/*
-*.swp
-*.txt
 # Packages
 dist
-.idea/
-venv/
 .tox/
 .cache/
 .coverage
+requirements.txt
