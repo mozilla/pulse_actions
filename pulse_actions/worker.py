@@ -64,7 +64,7 @@ def run_listener(config_file, dry_run=True):
         user=os.environ['PULSE_USER'],
         password=os.environ['PULSE_PW'],
         config_file_path=config_file,
-        handle_message=handler_with_dry_run,
+        process_message=handler_with_dry_run,
     )
 
     while True:
