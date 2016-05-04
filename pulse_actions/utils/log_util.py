@@ -39,3 +39,4 @@ def setup_logging(logging_level):
     # Reduce logging for other noisy modules
     logging.getLogger("requests").setLevel(logging.WARNING)
     logging.getLogger("amqp").setLevel(logging.WARNING)
+    return LOG
