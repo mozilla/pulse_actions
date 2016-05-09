@@ -9,6 +9,7 @@ from timeit import default_timer
 import pulse_actions.handlers.treeherder_buildbot as treeherder_buildbot
 import pulse_actions.handlers.treeherder_resultset as treeherder_resultset
 import pulse_actions.handlers.treeherder_runnable as treeherder_runnable
+import pulse_actions.handlers.talos as talos
 
 from pulse_actions.utils.log_util import setup_logging
 
@@ -47,6 +48,8 @@ def route(data, message, dry_run):
         treeherder_runnable.on_runnable_job_prod_event(data, message, dry_run)
     elif 'resultset_id' in data:
         treeherder_resultset.on_resultset_action_event(data, message, dry_run)
+    elif data['_meta']['exchange'] == 'exchange/build/normalized':
+        talos.on_event(data, message, dry_run)
     else:
         LOG.error("Exchange not supported by router (%s)." % data)
 
