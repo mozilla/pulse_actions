@@ -1,5 +1,5 @@
 {
-    "applabel": "['worker3']",
+    "applabel": "worker3",
     "durable": "true",
     "sources": {
         "talos-jobs": {
