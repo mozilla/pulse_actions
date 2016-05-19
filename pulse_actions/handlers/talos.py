@@ -31,7 +31,9 @@ def on_event(data, message, dry_run):
     info = get_buildername_metadata(buildername)
     revision = payload["revision"]
 
-    if info['build_type'] == "pgo" and info['repo_name'] in ['mozilla-inbound', 'fx-team']:
+    if info['build_type'] == "pgo" and \
+       info['repo_name'] in ['mozilla-inbound', 'fx-team'] and \
+       info['platform_name'] != 'win64':
         # Treeherder can send us invalid builder names
         # https://bugzilla.mozilla.org/show_bug.cgi?id=1242038
         buildername = filter_invalid_builders(buildername)
