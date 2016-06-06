@@ -8,6 +8,7 @@ This module is for the following use case:
 import logging
 
 from mozci import query_jobs
+from mozci.errors import MissingBuilderError
 from mozci.mozci import trigger_talos_jobs_for_build
 from mozci.platforms import get_buildername_metadata
 from mozci.sources import buildjson
@@ -28,7 +29,15 @@ def on_event(data, message, dry_run):
     payload = data["payload"]
     status = payload["status"]
     buildername = payload["buildername"]
-    info = get_buildername_metadata(buildername)
+    try:
+        info = get_buildername_metadata(buildername)
+    except MissingBuilderError, e:
+        LOG.warning(str(e))
+        if not dry_run:
+            # We need to ack the message to remove it from our queue
+            message.ack()
+
+        return
     revision = payload["revision"]
 
     if info['build_type'] == "pgo" and \
