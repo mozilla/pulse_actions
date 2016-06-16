@@ -1,0 +1,20 @@
+{
+    "durable": "false",
+    "sources": {
+        "resultset_actions": {
+            "exchange": "exchange/treeherder-stage/v1/resultset-actions",
+            "topic": "#.#"
+        },
+        "manual_backfill": {
+            "exchange": "exchange/treeherder-stage/v1/job-actions",
+            "topic": "buildbot.#.backfill"
+        },
+        "runnable": {
+            "exchange": "exchange/treeherder-stage/v1/resultset-runnable-job-actions",
+            "topic": "#"
+        }
+    },
+    "pulse_actions": {
+        "treeherder_host": "treeherder.allizom.org"
+    }
+}
