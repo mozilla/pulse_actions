@@ -90,9 +90,6 @@ def message_handler(data, message, *args, **kwargs):
     except Exception as e:
         LOG.exception(e)
 
-    if not DRY_RUN:
-        message.ack()
-
     LOG.info('Message {}, took {} seconds to execute'.format(
         str(data)[0:150],
         str(int(int(default_timer() - start_time)))))
