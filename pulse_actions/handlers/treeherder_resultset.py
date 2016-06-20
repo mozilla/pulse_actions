@@ -9,15 +9,7 @@ from thclient import TreeherderClient
 LOG = logging.getLogger(__name__)
 
 
-def on_resultset_action_prod_event(data, message, dry_run):
-    return on_resultset_action_event(data, message, dry_run, stage=False)
-
-
-def on_resultset_action_stage_event(data, message, dry_run):
-    return on_resultset_action_event(data, message, dry_run, stage=True)
-
-
-def on_resultset_action_event(data, message, dry_run, stage=False):
+def on_resultset_action_event(data, message, dry_run, treeherder_host):
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
@@ -27,10 +19,7 @@ def on_resultset_action_event(data, message, dry_run, stage=False):
     # Pulse gives us resultset_id, we need to get revision from it.
     resultset_id = data["resultset_id"]
 
-    if stage:
-        treeherder_client = TreeherderClient(host='treeherder.allizom.org')
-    else:
-        treeherder_client = TreeherderClient()
+    treeherder_client = TreeherderClient(host=treeherder_host)
 
     # We do not handle 'cancel_all' action right now, so skip it.
     if action == "cancel_all":

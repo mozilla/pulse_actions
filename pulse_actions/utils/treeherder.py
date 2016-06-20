@@ -1,11 +1,11 @@
 import requests
 
-TH_ARTIFACT_URL = 'https://treeherder.mozilla.org/api/project/{}/artifact/'
+TH_ARTIFACT_URL = 'https://{}/api/project/{}/artifact/'
 
 
-def get_request_id_from_job_id(repo_name, job_id):
+def get_request_id_from_job_id(repo_name, job_id, treeherder_host):
     """Get buildapi's request_id from Treeherder's artifact API."""
-    artifact_url = TH_ARTIFACT_URL.format(repo_name)
+    artifact_url = TH_ARTIFACT_URL.format(treeherder_host, repo_name)
     query_params = {
         'job_id': job_id,
         'name': 'buildapi',

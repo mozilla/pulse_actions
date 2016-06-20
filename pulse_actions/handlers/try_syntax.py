@@ -14,18 +14,15 @@ from thclient import TreeherderClient
 
 LOG = logging.getLogger(__name__)
 MEMORY_SAVING_MODE = True
-TREEHERDER = 'https://treeherder.mozilla.org/#/jobs?repo=%(repo)s&revision=%(revision)s'
+TREEHERDER = 'https://%(host)s/#/jobs?repo=%(repo)s&revision=%(revision)s'
 
 
-def on_runnable_job_event(data, message, dry_run, stage):
+def on_runnable_job_event(data, message, dry_run, treeherder_host):
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
 
-    if stage:
-        treeherder_client = TreeherderClient(host='treeherder.allizom.org')
-    else:
-        treeherder_client = TreeherderClient()
+    treeherder_client = TreeherderClient(host='treeherder.allizom.org')
 
     # XXX:
     # Grabbing data received over pulse
@@ -39,7 +36,11 @@ def on_runnable_job_event(data, message, dry_run, stage):
     author = resultset["author"]
     status = None
 
-    treeherder_link = TREEHERDER % {'repo': repo_name, 'revision': resultset['revision']}
+    treeherder_link = TREEHERDER % {
+        'host': treeherder_host,
+        'repo': repo_name,
+        'revision': resultset['revision']
+    }
 
     message_sender = MessageHandler()
     if not (requester.endswith('@mozilla.com') or author == requester or

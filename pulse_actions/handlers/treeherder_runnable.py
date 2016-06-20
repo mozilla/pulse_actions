@@ -9,26 +9,15 @@ from thclient import TreeherderClient
 
 LOG = logging.getLogger(__name__)
 MEMORY_SAVING_MODE = True
-TREEHERDER = 'https://treeherder.mozilla.org/#/jobs?repo=%(repo)s&revision=%(revision)s'
+TREEHERDER = 'https://%(host)s/#/jobs?repo=%(repo)s&revision=%(revision)s'
 
 
-def on_runnable_job_stage_event(data, message, dry_run):
-    return on_runnable_job_event(data, message, dry_run, stage=True)
-
-
-def on_runnable_job_prod_event(data, message, dry_run):
-    return on_runnable_job_event(data, message, dry_run, stage=False)
-
-
-def on_runnable_job_event(data, message, dry_run, stage):
+def on_runnable_job_event(data, message, dry_run, treeherder_host):
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
 
-    if stage:
-        treeherder_client = TreeherderClient(host='treeherder.allizom.org')
-    else:
-        treeherder_client = TreeherderClient()
+    treeherder_client = TreeherderClient(host=treeherder_host)
 
     # Grabbing data received over pulse
     repo_name = data["project"]
@@ -40,7 +29,11 @@ def on_runnable_job_event(data, message, dry_run, stage):
     revision = resultset["revision"]
     author = resultset["author"]
 
-    treeherder_link = TREEHERDER % {'repo': repo_name, 'revision': resultset['revision']}
+    treeherder_link = TREEHERDER % {
+        'host': treeherder_host,
+        'repo': repo_name,
+        'revision': resultset['revision']
+    }
 
     if not (requester.endswith('@mozilla.com') or author == requester or
             whitelisted_users(requester)):
