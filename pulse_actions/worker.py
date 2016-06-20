@@ -154,7 +154,7 @@ def parse_args(argv=None):
     parser.add_argument('--replay-file', dest="replay_file", type=str,
                         help='You can specify a file with saved pulse_messages to process')
 
-    parser.add_argument('--memory-saving', dest="memory_saving", default=False,
+    parser.add_argument('--memory-saving', action='store_true', dest="memory_saving",
                         help='Enable memory saving. It is good for Heroku')
 
     parser.add_argument('--treeherder-host', dest="treeherder_host", type=str,
