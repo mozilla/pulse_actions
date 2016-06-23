@@ -61,8 +61,15 @@ TREEHERDER_HOST = None
 def main():
     global DRY_RUN, JOB_FACTORY, LOG, TREEHERDER_HOST
 
+    # 0) Check required environment variables
+    fail_check = False
     for env in REQUIRED_ENV_VARIABLES:
-        assert env in os.environ, 'Please set {} as an environment variable.'.format(env)
+        if env not in os.environ:
+            LOG.info('- {}'.format(env))
+
+    if fail_check:
+        LOG.error('Please set all the missing environment variables above.')
+        sys.exit(1)
 
     # 1) Parse the command line arguments
     options = parse_args()
@@ -142,21 +149,24 @@ def _determine_repo_revision(data):
     ''' Return repo_name and revision based on Pulse message data.'''
     query = TreeherderApi()
 
-    repo_name = data['project']
-
-    if 'job_id' in data:
-        revision = query.query_revision_for_job(
-            repo_name=repo_name,
-            job_id=data['job_id']
-        )
-    elif 'resultset_id' in data:
-        revision = query.query_revision_for_resultset(
-            repo_name=repo_name,
-            resultset_id=data['resultset_id']
-        )
-    else:
-        LOG.error('We should have been able to determine the repo and revision')
-        sys.exit(1)
+    if 'project' in data:
+        repo_name = data['project']
+        if 'job_id' in data:
+            revision = query.query_revision_for_job(
+                repo_name=repo_name,
+                job_id=data['job_id']
+            )
+        elif 'resultset_id' in data:
+            revision = query.query_revision_for_resultset(
+                repo_name=repo_name,
+                resultset_id=data['resultset_id']
+            )
+        else:
+            LOG.error('We should have been able to determine the repo and revision')
+            sys.exit(1)
+    elif data['_meta']['exchange'] == 'exchange/build/normalized':
+        repo_name = data['payload']['tree']
+        revision = data['payload']['revision']
 
     return repo_name, revision
 
@@ -199,7 +209,7 @@ def message_handler(data, message, *args, **kwargs):
 
     # 4) We're done - let's stop the logging
     LOG.info('Message {}, took {} seconds to execute'.format(
-        str(data)[0:150],
+        str(data),
         str(int(int(default_timer() - start_time)))))
 
     LOG.info('#### End of request ####.')
