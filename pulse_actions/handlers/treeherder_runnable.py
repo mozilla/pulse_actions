@@ -88,7 +88,7 @@ def on_runnable_job_event(data, message, dry_run, treeherder_host):
     )
 
     if builders_graph != {}:
-        mgr = TaskClusterBuildbotManager()
+        mgr = TaskClusterBuildbotManager(dry_run=dry_run)
         mgr.schedule_graph(
             repo_name=repo_name,
             revision=revision,

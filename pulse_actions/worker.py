@@ -18,35 +18,72 @@ from pulse_actions.utils.log_util import (
     start_logging,
 )
 
+# Third party modules
 from mozci.mozci import disable_validations
+from mozci.query_jobs import TreeherderApi
 from mozci.utils import transfer
 from replay import create_consumer, replay_messages
+from thsubmitter import (
+    TreeherderSubmitter,
+    TreeherderJobFactory
+)
 
 # This changes the behaviour of mozci in transfer.py
 transfer.MEMORY_SAVING_MODE = False
 transfer.SHOW_PROGRESS_BAR = False
 
-DRY_RUN = True
+# These constants are used inside of message_handler
+DRY_RUN = None
+JOB_FACTORY = None
 LOG = None
-TREEHERDER_HOST = 'treeherder.mozilla.org'
+PULSE_ACTIONS_JOB_TEMPLATE = {
+    'desc': 'This job was scheduled by pulse_actions.',
+    'job_name': 'pulse_actions',
+    'job_symbol': 'Sch',
+    # Even if 'opt' does not apply to us
+    'option_collection': 'opt',
+    # Used if add_platform_info is set to True
+    'platform_info': ('linux', 'gecko-decision', 'x86_64'),
+}
+REQUIRED_ENV_VARIABLES = [
+    'LDAP_USER',  # To post jobs to BuildApi
+    'LDAP_PW',
+    'TASKCLUSTER_CLIENT_ID',  # To schedule jobs through TaskCluster
+    'TASKCLUSTER_ACCESS_TOKEN',
+    'TREEHERDER_CLIENT_ID',  # To submit Treeherder test jobs
+    'TREEHERDER_SECRET',
+    'PULSE_USER',  # To create Pulse queues and consume from them
+    'PULSE_PW',
+]
+TREEHERDER_HOST = None
 
 
 def main():
-    global DRY_RUN, LOG, TREEHERDER_HOST
+    global DRY_RUN, JOB_FACTORY, LOG, TREEHERDER_HOST
+
+    for env in REQUIRED_ENV_VARIABLES:
+        assert env in os.environ, 'Please set {} as an environment variable.'.format(env)
+
+    # 1) Parse the command line arguments
     options = parse_args()
 
+    # 2) Set up logging
     if options.debug:
         LOG = setup_logging(logging.DEBUG)
     else:
         LOG = setup_logging(logging.INFO)
 
+    # 3) Enable memory saving (useful for Heroku)
     if options.memory_saving:
         transfer.MEMORY_SAVING_MODE = True
 
-    DRY_RUN = options.dry_run
-    if options.config_file:
-        # Load information only relevant to pulse_actions
+    # 4) Set the treeherder host
+    if options.treeherder_host:
+        TREEHERDER_HOST = options.treeherder_host
+
+    else:
         with open(options.config_file, 'r') as file:
+            # Load information only relevant to pulse_actions
             pulse_actions_config = json.load(file).get('pulse_actions')
 
             if pulse_actions_config:
@@ -54,16 +91,32 @@ def main():
                 # We would not want to try to test with a stage config yet
                 # we query production instead of stage
                 TREEHERDER_HOST = pulse_actions_config['treeherder_host']
-            else:
-                TREEHERDER_HOST = options.treeherder_host
 
-    # Disable mozci's validations
+    assert TREEHERDER_HOST is not None
+
+    # 5) Set DRY_RUN which is used by message_handler
+    DRY_RUN = options.dry_run or options.replay_file is not None
+
+    # 6) Set up the treeherder submitter
+    JOB_FACTORY = initialize_treeherder_submission(
+        # XXX: For now we will post only to staging
+        host='treeherder.allizom.org',
+        protocol='http' if TREEHERDER_HOST.startswith('local') else 'https',
+        client=os.environ['TREEHERDER_CLIENT_ID'],
+        secret=os.environ['TREEHERDER_SECRET'],
+        # XXX: Temporarily
+        dry_run=False,
+    )
+
+    # 7) XXX: Disable mozci's validations (this might not be needed anymore)
     disable_validations()
+
+    # 8) Determine if normal run is requested or replaying of saved messages
     if options.replay_file:
         replay_messages(
             filepath=options.replay_file,
             process_message=message_handler,
-            dry_run=True
+            dry_run=True,
         )
     else:
         # Normal execution path
@@ -71,6 +124,41 @@ def main():
             config_file=options.config_file,
             dry_run=options.dry_run
         )
+
+
+def initialize_treeherder_submission(host, protocol, client, secret, dry_run):
+    # 1) Object to submit jobs
+    th = TreeherderSubmitter(
+        host=host,
+        protocol=protocol,
+        treeherder_client_id=client,
+        treeherder_secret=secret,
+        dry_run=dry_run,
+    )
+    return TreeherderJobFactory(submitter=th)
+
+
+def _determine_repo_revision(data):
+    ''' Return repo_name and revision based on Pulse message data.'''
+    query = TreeherderApi()
+
+    repo_name = data['project']
+
+    if 'job_id' in data:
+        revision = query.query_revision_for_job(
+            repo_name=repo_name,
+            job_id=data['job_id']
+        )
+    elif 'resultset_id' in data:
+        revision = query.query_revision_for_resultset(
+            repo_name=repo_name,
+            resultset_id=data['resultset_id']
+        )
+    else:
+        LOG.error('We should have been able to determine the repo and revision')
+        sys.exit(1)
+
+    return repo_name, revision
 
 
 # Pulse consumer's callback passes only data and message arguments
@@ -82,20 +170,68 @@ def message_handler(data, message, *args, **kwargs):
     XXX: Upload each logging file into S3
     XXX: Report the job to Treeherder as running and then as complete
     '''
+    # XXX: Let's not submit to Treeherder
+    submit_to_treeherder = False
+
+    # 1) Start logging and timing
     file_path = start_logging()
-    LOG.info('#### New request ####.')
     start_time = default_timer()
+
+    # 2) Report as running to Treeherder
+    repo_name, revision = _determine_repo_revision(data)
+
+    if submit_to_treeherder:
+        job = JOB_FACTORY.create_job(
+            repository=repo_name,
+            revision=revision,
+            add_platform_info=True,
+            dry_run=DRY_RUN,
+            **PULSE_ACTIONS_JOB_TEMPLATE
+        )
+        JOB_FACTORY.submit_running(job)
+
+    LOG.info('#### New request ####.')
+    # 3) process the message
     try:
         route(data, message, DRY_RUN, TREEHERDER_HOST)
     except Exception as e:
         LOG.exception(e)
 
+    # 4) We're done - let's stop the logging
     LOG.info('Message {}, took {} seconds to execute'.format(
         str(data)[0:150],
         str(int(int(default_timer() - start_time)))))
+
+    LOG.info('#### End of request ####.')
     end_logging(file_path)
-    # XXX: Upload to S3
-    # XXX: Report to Treeherder
+
+    # XXX: 5) Upload logs to S3
+
+    # 6) Submit results to Treeherder
+    if submit_to_treeherder:
+        bugzilla_link = "https://bugzilla.mozilla.org/enter_bug.cgi?assigned_to=nobody%40mozilla.org&cc=armenzg%40mozilla.com&comment=Provide%20link.&component=General&form_name=enter_bug&product=Testing&short_desc=pulse_actions%20-%20Brief%20description%20of%20failure"  # flake8: noqa
+
+        JOB_FACTORY.submit_completed(
+            job=job,
+            result='success',  # XXX: This should be a constant
+            job_info_details_panel=[
+                {
+                    "url": bugzilla_link,
+                    "value": "bug template",
+                    "content_type": "link",
+                    "title": "File bug"
+                },
+            ],
+            log_references=[
+                {
+                    "url": "http://people.mozilla.org/~armenzg/foo.txt",
+                    # Irrelevant name since we're not providing a custom log viewer parser
+                    # and we're setting the status to 'parsed'
+                    "name": "foo",
+                    "parse_status": "parsed"
+                }
+            ],
+        )
 
 
 def route(data, message, dry_run, treeherder_host):
@@ -148,17 +284,21 @@ def parse_args(argv=None):
     parser.add_argument('--dry-run', action="store_true", dest="dry_run",
                         help="Test without actual making changes.")
 
-    parser.add_argument('--replay-file', dest="replay_file", type=str,
-                        help='You can specify a file with saved pulse_messages to process')
-
     parser.add_argument('--memory-saving', action='store_true', dest="memory_saving",
                         help='Enable memory saving. It is good for Heroku')
 
+    parser.add_argument('--replay-file', dest="replay_file", type=str,
+                        help='You can specify a file with saved pulse_messages to process')
+
     parser.add_argument('--treeherder-host', dest="treeherder_host", type=str,
-                        default='treeherder.mozilla.org',
                         help='You can specify a file with saved pulse_messages to process')
 
     options = parser.parse_args(argv)
+
+    if options.config_file and options.treeherder_host:
+        # treeherder_host can be mistakenly set to two different values if we allow for this
+        raise Exception('Do not use --treeherder-host with --config-file')
+
     return options
 
 

@@ -1,13 +1,7 @@
 # Main dependencies
-mozci==0.39.1
+mozci==0.40.0
 pulse_replay==0.2.0
-
-# Required by pulse_replay
-MozillaPulse==1.2.2
-amqp==1.4.9
-anyjson==0.3.3
-kombu==3.0.33
-pytz==2015.7
+treeherder_submitter==0.1.0
 
 # Required by mozci
 buildapi-client==0.3.0
@@ -18,10 +12,21 @@ pushlog-client==0.5.0
 redo==1.5
 requests==2.9.1
 taskcluster==0.2.0
-treeherder-client==2.0.1
+treeherder-client==2.1.0
+
+# Required by pulse_replay
+MozillaPulse==1.2.2
+amqp==1.4.9
+anyjson==0.3.3
+kombu==3.0.33
+pytz==2015.7
 
 # Required by taskcluster
 mohawk==0.3.2.1
 requests==2.9.1
 six==1.10.0
 slugid==1.0.7
+
+# Required by treeherder_submitter
+mozinfo==0.9
+mozfile==1.2

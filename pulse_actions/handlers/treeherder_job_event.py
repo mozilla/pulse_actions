@@ -107,12 +107,12 @@ def on_event(data, message, dry_run, treeherder_host):
         job_id
     )
 
-    LOG.info("{} action requested by {} for '{}' - link {}".format(
+    LOG.info("{} action requested by {} for '{}'".format(
         action,
         data['requester'],
         buildername,
-        link_to_job,
     ))
+    LOG.info('Request for {}'.format(link_to_job))
 
     buildername = filter_invalid_builders(buildername)
 
