@@ -116,6 +116,7 @@ def main():
         replay_messages(
             filepath=options.replay_file,
             process_message=message_handler,
+            dry_run=True,
         )
     else:
         # Normal execution path
