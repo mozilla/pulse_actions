@@ -43,7 +43,7 @@ PULSE_ACTIONS_JOB_TEMPLATE = {
     # Even if 'opt' does not apply to us
     'option_collection': 'opt',
     # Used if add_platform_info is set to True
-    'platform_info': ('linux', 'gecko-decision', 'x86_64'),
+    'platform_info': ('linux', 'other', 'x86_64'),
 }
 REQUIRED_ENV_VARIABLES = [
     'LDAP_USER',  # To post jobs to BuildApi
