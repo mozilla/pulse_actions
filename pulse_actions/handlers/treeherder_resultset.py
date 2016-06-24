@@ -9,7 +9,7 @@ from thclient import TreeherderClient
 LOG = logging.getLogger(__name__)
 
 
-def on_resultset_action_event(data, message, dry_run, treeherder_host):
+def on_resultset_action_event(data, message, dry_run, treeherder_host, acknowledge):
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
@@ -23,7 +23,7 @@ def on_resultset_action_event(data, message, dry_run, treeherder_host):
 
     # We do not handle 'cancel_all' action right now, so skip it.
     if action == "cancel_all":
-        if not dry_run:
+        if acknowledge:
             message.ack()
         return
     LOG.info("%s action requested by %s on repo_name %s with resultset_id: %s" % (
@@ -38,7 +38,7 @@ def on_resultset_action_event(data, message, dry_run, treeherder_host):
     if action == "trigger_missing_jobs":
         mgr = BuildAPIManager()
         mgr.trigger_missing_jobs_for_revision(repo_name, revision, dry_run=dry_run)
-        if not dry_run:
+        if acknowledge:
             status = 'trigger_missing_jobs request sent'
         else:
             status = 'Dry-mode, no request sent'
@@ -51,7 +51,7 @@ def on_resultset_action_event(data, message, dry_run, treeherder_host):
             priority=-1,
             dry_run=dry_run
         )
-        if not dry_run:
+        if acknowledge:
             status = 'trigger_all_talos_jobs: {0} times request sent with priority'\
                      'lower then normal'.format(times)
         else:
@@ -59,6 +59,6 @@ def on_resultset_action_event(data, message, dry_run, treeherder_host):
 
     LOG.debug(status)
 
-    if not dry_run:
+    if acknowledge:
         # We need to ack the message to remove it from our queue
         message.ack()
