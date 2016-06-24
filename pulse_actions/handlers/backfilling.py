@@ -28,7 +28,7 @@ from requests.exceptions import ConnectionError
 LOG = logging.getLogger()
 
 
-def on_event(data, message, dry_run):
+def on_event(data, message, dry_run, acknowledge):
     """Automatically backfill failed jobs."""
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
@@ -44,7 +44,7 @@ def on_event(data, message, dry_run):
         # Treeherder can send us invalid builder names
         # https://bugzilla.mozilla.org/show_bug.cgi?id=1242038
         if buildername is None:
-            if not dry_run:
+            if acknowledge:
                 # We need to ack the message to remove it from our queue
                 message.ack()
             return
@@ -69,7 +69,7 @@ def on_event(data, message, dry_run):
                 trigger_build_if_missing=False
             )
 
-            if not dry_run:
+            if acknowledge:
                 # We need to ack the message to remove it from our queue
                 message.ack()
 
@@ -86,7 +86,7 @@ def on_event(data, message, dry_run):
             LOG.warning(str(e))
             raise
     else:
-        if not dry_run:
+        if acknowledge:
             # We need to ack the message to remove it from our queue
             message.ack()
 

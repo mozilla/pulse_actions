@@ -33,6 +33,7 @@ transfer.MEMORY_SAVING_MODE = False
 transfer.SHOW_PROGRESS_BAR = False
 
 # These constants are used inside of message_handler
+ACKNOWLEDGE = True
 DRY_RUN = None
 JOB_FACTORY = None
 LOG = None
@@ -101,8 +102,12 @@ def main():
 
     assert TREEHERDER_HOST is not None
 
-    # 5) Set DRY_RUN which is used by message_handler
+    # 5) Set DRY_RUN and ACKNOWLEDGE which are used by message_handler
     DRY_RUN = options.dry_run or options.replay_file is not None
+    if options.acknowledge:
+        ACKNOWLEDGE = True
+    elif options.dry_run:
+        ACKNOWLEDGE = False
 
     # 6) Set up the treeherder submitter
     JOB_FACTORY = initialize_treeherder_submission(
@@ -203,7 +208,7 @@ def message_handler(data, message, *args, **kwargs):
     LOG.info('#### New request ####.')
     # 3) process the message
     try:
-        route(data, message, DRY_RUN, TREEHERDER_HOST)
+        route(data, message, DRY_RUN, TREEHERDER_HOST, ACKNOWLEDGE)
     except Exception as e:
         LOG.exception(e)
 
@@ -244,7 +249,7 @@ def message_handler(data, message, *args, **kwargs):
         )
 
 
-def route(data, message, dry_run, treeherder_host):
+def route(data, message, dry_run, treeherder_host, acknowledge):
     ''' We need to map every exchange/topic to a specific handler.
 
     We return if the request was processed succesfully or not
@@ -252,15 +257,16 @@ def route(data, message, dry_run, treeherder_host):
     # XXX: This is not ideal; we should define in the config which exchange uses which handler
     # XXX: Specify here which treeherder host
     if 'job_id' in data:
-        exit_code = treeherder_job_event.on_event(data, message, dry_run, treeherder_host)
+        exit_code = treeherder_job_event.on_event(data, message, dry_run, treeherder_host,
+                                                  acknowledge)
     elif 'buildernames' in data:
         exit_code = treeherder_runnable.on_runnable_job_event(data, message, dry_run,
-                                                              treeherder_host)
+                                                              treeherder_host, acknowledge)
     elif 'resultset_id' in data:
         exit_code = treeherder_resultset.on_resultset_action_event(data, message, dry_run,
-                                                                   treeherder_host)
+                                                                   treeherder_host, acknowledge)
     elif data['_meta']['exchange'] == 'exchange/build/normalized':
-        exit_code = talos.on_event(data, message, dry_run)
+        exit_code = talos.on_event(data, message, dry_run, acknowledge)
     else:
         LOG.error("Exchange not supported by router (%s)." % data)
 
@@ -293,6 +299,9 @@ def parse_args(argv=None):
 
     parser.add_argument('--dry-run', action="store_true", dest="dry_run",
                         help="Test without actual making changes.")
+
+    parser.add_argument('--acknowledge', action="store_true", dest="acknowledge",
+                        help="Acknowledge even if running on dry run mode.")
 
     parser.add_argument('--memory-saving', action='store_true', dest="memory_saving",
                         help='Enable memory saving. It is good for Heroku')

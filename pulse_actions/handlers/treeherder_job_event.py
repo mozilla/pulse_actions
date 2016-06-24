@@ -70,7 +70,7 @@ from thclient import TreeherderClient
 LOG = logging.getLogger(__name__.split('.')[-1])
 
 
-def on_event(data, message, dry_run, treeherder_host):
+def on_event(data, message, dry_run, treeherder_host, acknowledge):
     """Act upon Treeherder job events.
 
     Return if the outcome was successful or not
@@ -130,12 +130,12 @@ def on_event(data, message, dry_run, treeherder_host):
                 buildername=buildername,
                 dry_run=dry_run,
             )
-            if not dry_run:
+            if acknowledge:
                 status = 'Backfill request sent'
             else:
                 status = 'Dry-run mode, nothing was backfilled'
             LOG.debug(status)
 
-    if not dry_run:
+    if acknowledge:
         # We need to ack the message to remove it from our queue
         message.ack()

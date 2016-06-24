@@ -18,7 +18,7 @@ from pulse_actions.utils.misc import filter_invalid_builders
 LOG = logging.getLogger(__name__.split('.')[-1])
 
 
-def on_event(data, message, dry_run):
+def on_event(data, message, dry_run, acknowledge):
     """
     Whenever PGO builds are completed in mozilla-inbound or fx-team,
     we trigger the corresponding talos jobs twice.
@@ -33,7 +33,7 @@ def on_event(data, message, dry_run):
         info = get_buildername_metadata(buildername)
     except MissingBuilderError, e:
         LOG.warning(str(e))
-        if not dry_run:
+        if acknowledge:
             # We need to ack the message to remove it from our queue
             message.ack()
 
@@ -48,7 +48,7 @@ def on_event(data, message, dry_run):
         buildername = filter_invalid_builders(buildername)
 
         if buildername is None:
-            if not dry_run:
+            if acknowledge:
                 # We need to ack the message to remove it from our queue
                 message.ack()
             return
@@ -63,7 +63,7 @@ def on_event(data, message, dry_run):
                 dry_run=dry_run
             )
 
-            if not dry_run:
+            if acknowledge:
                 # We need to ack the message to remove it from our queue
                 message.ack()
 
@@ -72,7 +72,7 @@ def on_event(data, message, dry_run):
             LOG.warning(str(e))
             raise
     else:
-        if not dry_run:
+        if acknowledge:
             # We need to ack the message to remove it from our queue
             message.ack()
 
