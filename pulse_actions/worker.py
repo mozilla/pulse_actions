@@ -46,6 +46,7 @@ PULSE_ACTIONS_JOB_TEMPLATE = {
     # Used if add_platform_info is set to True
     'platform_info': ('linux', 'other', 'x86_64'),
 }
+ROUTE = True
 REQUIRED_ENV_VARIABLES = [
     'LDAP_USER',  # To post jobs to BuildApi
     'LDAP_PW',
@@ -61,7 +62,13 @@ TREEHERDER_HOST = None
 
 
 def main():
-    global DRY_RUN, JOB_FACTORY, LOG, TREEHERDER_HOST, SUBMIT_TO_TREEHERDER
+    global \
+        DRY_RUN, \
+        JOB_FACTORY, \
+        LOG, \
+        TREEHERDER_HOST, \
+        ROUTE, \
+        SUBMIT_TO_TREEHERDER
 
     # 0) Parse the command line arguments
     options = parse_args()
@@ -120,6 +127,9 @@ def main():
         ACKNOWLEDGE = True
     elif options.dry_run:
         ACKNOWLEDGE = False
+
+    if options.do_not_route:
+        ROUTE = False
 
     # 6) Set up the treeherder submitter
     if SUBMIT_TO_TREEHERDER:
@@ -214,10 +224,11 @@ def message_handler(data, message, *args, **kwargs):
 
     LOG.info('#### New request ####.')
     # 3) process the message
-    try:
-        route(data, message, DRY_RUN, TREEHERDER_HOST, ACKNOWLEDGE)
-    except Exception as e:
-        LOG.exception(e)
+    if ROUTE:
+        try:
+            route(data, message, DRY_RUN, TREEHERDER_HOST, ACKNOWLEDGE)
+        except Exception as e:
+            LOG.exception(e)
 
     # 4) We're done - let's stop the logging
     LOG.info('Message {}, took {} seconds to execute'.format(
@@ -316,6 +327,10 @@ def parse_args(argv=None):
 
     parser.add_argument('--dry-run', action="store_true", dest="dry_run",
                         help="Test without actual making changes.")
+
+    parser.add_argument('--do-not-route', action="store_true", dest="do_not_route",
+                        help='This is useful if you do not care about processing Pulse '
+                             'messages but want to test the overall system.')
 
     parser.add_argument('--memory-saving', action='store_true', dest="memory_saving",
                         help='Enable memory saving. It is good for Heroku')
