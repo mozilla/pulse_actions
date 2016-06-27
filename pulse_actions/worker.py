@@ -32,21 +32,7 @@ from thsubmitter import (
 transfer.MEMORY_SAVING_MODE = False
 transfer.SHOW_PROGRESS_BAR = False
 
-# These constants are used inside of message_handler
-ACKNOWLEDGE = True
-DRY_RUN = False
-JOB_FACTORY = None
-LOG = None
-PULSE_ACTIONS_JOB_TEMPLATE = {
-    'desc': 'This job was scheduled by pulse_actions.',
-    'job_name': 'pulse_actions',
-    'job_symbol': 'Sch',
-    # Even if 'opt' does not apply to us
-    'option_collection': 'opt',
-    # Used if add_platform_info is set to True
-    'platform_info': ('linux', 'other', 'x86_64'),
-}
-ROUTE = True
+# Constants
 REQUIRED_ENV_VARIABLES = [
     'LDAP_USER',  # To post jobs to BuildApi
     'LDAP_PW',
@@ -57,18 +43,30 @@ REQUIRED_ENV_VARIABLES = [
     'PULSE_USER',  # To create Pulse queues and consume from them
     'PULSE_PW',
 ]
-SUBMIT_TO_TREEHERDER = False  # XXX: Change when ready
-TREEHERDER_HOST = None
+# Global variables
+LOG = None
+# These values are used inside of message_handler
+CONFIG = {
+    'acknowledge': True,
+    'dry_run': False,
+    'job_factory': None,
+    'pulse_actions_job_template': {
+        'desc': 'This job was scheduled by pulse_actions.',
+        'job_name': 'pulse_actions',
+        'job_symbol': 'Sch',
+        # Even if 'opt' does not apply to us
+        'option_collection': 'opt',
+        # Used if add_platform_info is set to True
+        'platform_info': ('linux', 'other', 'x86_64'),
+    },
+    'route': True,
+    'submit_to_treeherder': False,  # XXX: Change when ready
+    'treeherder_host': 'treeherder.allizom.org',
+}
 
 
 def main():
-    global \
-        DRY_RUN, \
-        JOB_FACTORY, \
-        LOG, \
-        TREEHERDER_HOST, \
-        ROUTE, \
-        SUBMIT_TO_TREEHERDER
+    global LOG, CONFIG
 
     # 0) Parse the command line arguments
     options = parse_args()
@@ -97,7 +95,7 @@ def main():
 
     # 4) Set the treeherder host
     if options.treeherder_host:
-        TREEHERDER_HOST = options.treeherder_host
+        CONFIG['treeherder_host'] = options.treeherder_host
 
     elif options.config_file:
         with open(options.config_file, 'r') as file:
@@ -108,35 +106,33 @@ def main():
                 # Inside of some of our handlers we set the Treeherder client
                 # We would not want to try to test with a stage config yet
                 # we query production instead of stage
-                TREEHERDER_HOST = pulse_actions_config['treeherder_host']
+                CONFIG['treeherder_host'] = pulse_actions_config['treeherder_host']
     else:
         LOG.error('Set --treeherder-host if you\'re not using a config file')
         sys.exit(1)
 
-    assert TREEHERDER_HOST is not None
-
     # 5) Set few constants which are used by message_handler
-    DRY_RUN = options.dry_run or options.replay_file is not None
+    CONFIG['dry_run'] = options.dry_run or options.replay_file is not None
 
     if options.submit_to_treeherder:
-        SUBMIT_TO_TREEHERDER = True
+        CONFIG['submit_to_treeherder'] = True
     elif options.dry_run:
-        SUBMIT_TO_TREEHERDER = False
+        CONFIG['submit_to_treeherder'] = False
 
     if options.acknowledge:
-        ACKNOWLEDGE = True
+        CONFIG['acknowledge'] = True
     elif options.dry_run:
-        ACKNOWLEDGE = False
+        CONFIG['acknowledge'] = False
 
     if options.do_not_route:
-        ROUTE = False
+        CONFIG['route'] = False
 
     # 6) Set up the treeherder submitter
-    if SUBMIT_TO_TREEHERDER:
-        JOB_FACTORY = initialize_treeherder_submission(
+    if CONFIG['submit_to_treeherder']:
+        CONFIG['job_factory'] = initialize_treeherder_submission(
             # XXX: For now we will post only to staging
             host='treeherder.allizom.org',
-            protocol='http' if TREEHERDER_HOST.startswith('local') else 'https',
+            protocol='http' if CONFIG['treeherder_host'].startswith('local') else 'https',
             client=os.environ['TREEHERDER_CLIENT_ID'],
             secret=os.environ['TREEHERDER_SECRET'],
             # XXX: Temporarily
@@ -212,21 +208,22 @@ def message_handler(data, message, *args, **kwargs):
     # 2) Report as running to Treeherder
     repo_name, revision = _determine_repo_revision(data)
 
-    if SUBMIT_TO_TREEHERDER:
-        job = JOB_FACTORY.create_job(
+    if CONFIG['submit_to_treeherder']:
+        job = CONFIG['job_factory'].create_job(
             repository=repo_name,
             revision=revision,
             add_platform_info=True,
-            dry_run=DRY_RUN,
-            **PULSE_ACTIONS_JOB_TEMPLATE
+            dry_run=CONFIG['dry_run'],
+            **CONFIG['pulse_actions_job_template']
         )
-        JOB_FACTORY.submit_running(job)
+        CONFIG['job_factory'].submit_running(job)
 
     LOG.info('#### New request ####.')
     # 3) process the message
-    if ROUTE:
+    if CONFIG['route']:
         try:
-            route(data, message, DRY_RUN, TREEHERDER_HOST, ACKNOWLEDGE)
+            route(data, message, CONFIG['dry_run'], CONFIG['treeherder_host'],
+                  CONFIG['acknowledge'])
         except Exception as e:
             LOG.exception(e)
 
@@ -241,10 +238,10 @@ def message_handler(data, message, *args, **kwargs):
     # XXX: 5) Upload logs to S3
 
     # 6) Submit results to Treeherder
-    if SUBMIT_TO_TREEHERDER:
+    if CONFIG['submit_to_treeherder']:
         bugzilla_link = "https://bugzilla.mozilla.org/enter_bug.cgi?assigned_to=nobody%40mozilla.org&cc=armenzg%40mozilla.com&comment=Provide%20link.&component=General&form_name=enter_bug&product=Testing&short_desc=pulse_actions%20-%20Brief%20description%20of%20failure"  # flake8: noqa
 
-        JOB_FACTORY.submit_completed(
+        CONFIG['job_factory'].submit_completed(
             job=job,
             result='success',  # XXX: This should be a constant
             job_info_details_panel=[
