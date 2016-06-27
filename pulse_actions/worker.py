@@ -63,24 +63,26 @@ TREEHERDER_HOST = None
 def main():
     global DRY_RUN, JOB_FACTORY, LOG, TREEHERDER_HOST, SUBMIT_TO_TREEHERDER
 
-    # 0) Check required environment variables
-    fail_check = False
-    for env in REQUIRED_ENV_VARIABLES:
-        if env not in os.environ:
-            LOG.info('- {}'.format(env))
-
-    if fail_check:
-        LOG.error('Please set all the missing environment variables above.')
-        sys.exit(1)
-
-    # 1) Parse the command line arguments
+    # 0) Parse the command line arguments
     options = parse_args()
 
-    # 2) Set up logging
+    # 1) Set up logging
     if options.debug:
         LOG = setup_logging(logging.DEBUG)
     else:
         LOG = setup_logging(logging.INFO)
+
+    # 2) Check required environment variables
+    fail_check = False
+    for env in REQUIRED_ENV_VARIABLES:
+        if env not in os.environ:
+            LOG.info('- {}'.format(env))
+            fail_check = True
+
+    if fail_check:
+        if not options.dry_run:
+            LOG.error('Please set all the missing environment variables above.')
+            sys.exit(1)
 
     # 3) Enable memory saving (useful for Heroku)
     if options.memory_saving:
@@ -143,10 +145,7 @@ def main():
         )
     else:
         # Normal execution path
-        run_listener(
-            config_file=options.config_file,
-            dry_run=options.dry_run
-        )
+        run_listener(config_file=options.config_file)
 
 
 def initialize_treeherder_submission(host, protocol, client, secret, dry_run):
@@ -194,7 +193,7 @@ def message_handler(data, message, *args, **kwargs):
 
     * Each request is logged into a unique file
     XXX: Upload each logging file into S3
-    XXX: Report the job to Treeherder as running and then as complete
+    * Report the request to Treeherder first as running and then as complete
     '''
     # 1) Start logging and timing
     file_path = start_logging()
@@ -281,7 +280,14 @@ def route(data, message, dry_run, treeherder_host, acknowledge):
     return exit_code
 
 
-def run_listener(config_file, dry_run=True):
+def run_listener(config_file):
+    if 'PULSE_USER' not in os.environ or \
+       'PULSE_PW' not in os.environ:
+
+        LOG.error('You always need PULSE_{USER,PW} in your environment even '
+                  'if running on dry run mode.')
+        sys.exit(1)
+
     consumer = create_consumer(
         user=os.environ['PULSE_USER'],
         password=os.environ['PULSE_PW'],
@@ -321,7 +327,8 @@ def parse_args(argv=None):
                         help="Submit to treeherder even if running on dry run mode.")
 
     parser.add_argument('--treeherder-host', dest="treeherder_host", type=str,
-                        help='You can specify a file with saved pulse_messages to process')
+                        help='You can specify a treeherder host to use instead of reading the '
+                             'value from a config file.')
 
     options = parser.parse_args(argv)
 
