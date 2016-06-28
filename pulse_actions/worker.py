@@ -66,7 +66,7 @@ CONFIG = {
     },
     'route': True,
     'submit_to_treeherder': False,  # Disable until 'cancel_all' requests don't get submitted
-    'treeherder_host': 'treeherder.mozilla.org',
+    'treeherder_host': 'treeherder.allizom.org',  # Use stage to prevent mistakes
 }
 
 
@@ -99,6 +99,10 @@ def main():
         transfer.MEMORY_SAVING_MODE = True
 
     # 4) Set the treeherder host
+    if options.config_file and options.treeherder_host:
+        # treeherder_host can be mistakenly set to two different values if we allow for this
+        raw_input('Press Ctrl + C if you did not intent to use --treeherder-host with --config-file')
+
     if options.treeherder_host:
         CONFIG['treeherder_host'] = options.treeherder_host
 
@@ -112,6 +116,7 @@ def main():
                 # We would not want to try to test with a stage config yet
                 # we query production instead of stage
                 CONFIG['treeherder_host'] = pulse_actions_config['treeherder_host']
+
     else:
         LOG.error("Set --treeherder-host if you're not using a config file")
         sys.exit(1)
@@ -386,10 +391,6 @@ def parse_args(argv=None):
                              'value from a config file.')
 
     options = parser.parse_args(argv)
-
-    if options.config_file and options.treeherder_host:
-        # treeherder_host can be mistakenly set to two different values if we allow for this
-        raise Exception('Do not use --treeherder-host with --config-file')
 
     return options
 
