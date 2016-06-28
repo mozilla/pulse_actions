@@ -27,12 +27,14 @@ from thsubmitter import (
     TreeherderSubmitter,
     TreeherderJobFactory
 )
+from tc_s3_uploader import TC_S3_Uploader
 
 # This changes the behaviour of mozci in transfer.py
 transfer.MEMORY_SAVING_MODE = False
 transfer.SHOW_PROGRESS_BAR = False
 
 # Constants
+FILE_BUG = "https://bugzilla.mozilla.org/enter_bug.cgi?assigned_to=nobody%40mozilla.org&cc=armenzg%40mozilla.com&comment=Provide%20link.&component=General&form_name=enter_bug&product=Testing&short_desc=pulse_actions%20-%20Brief%20description%20of%20failure"  # flake8: noqa
 REQUIRED_ENV_VARIABLES = [
     'LDAP_USER',  # To post jobs to BuildApi
     'LDAP_PW',
@@ -49,7 +51,6 @@ LOG = None
 CONFIG = {
     'acknowledge': True,
     'dry_run': False,
-    'job_factory': None,
     'pulse_actions_job_template': {
         'desc': 'This job was scheduled by pulse_actions.',
         'job_name': 'pulse_actions',
@@ -66,7 +67,7 @@ CONFIG = {
 
 
 def main():
-    global LOG, CONFIG
+    global CONFIG, LOG, JOB_FACTORY, S3_UPLOADER
 
     # 0) Parse the command line arguments
     options = parse_args()
@@ -129,7 +130,8 @@ def main():
 
     # 6) Set up the treeherder submitter
     if CONFIG['submit_to_treeherder']:
-        CONFIG['job_factory'] = initialize_treeherder_submission(
+        S3_UPLOADER = TC_S3_Uploader(bucket_prefix='ateam/pulse-action-dev/')
+        JOB_FACTORY = initialize_treeherder_submission(
             # XXX: For now we will post only to staging
             host='treeherder.allizom.org',
             protocol='http' if CONFIG['treeherder_host'].startswith('local') else 'https',
@@ -166,9 +168,9 @@ def initialize_treeherder_submission(host, protocol, client, secret, dry_run):
     return TreeherderJobFactory(submitter=th)
 
 
-def _determine_repo_revision(data):
+def _determine_repo_revision(data, treeherder_host):
     ''' Return repo_name and revision based on Pulse message data.'''
-    query = TreeherderApi()
+    query = TreeherderApi(treeherder_host)
 
     if 'project' in data:
         repo_name = data['project']
@@ -198,7 +200,7 @@ def message_handler(data, message, *args, **kwargs):
     ''' Handle pulse message, log to file, upload and report to Treeherder
 
     * Each request is logged into a unique file
-    XXX: Upload each logging file into S3
+    * Upload each log file to S3
     * Report the request to Treeherder first as running and then as complete
     '''
     # 1) Start logging and timing
@@ -206,17 +208,17 @@ def message_handler(data, message, *args, **kwargs):
     start_time = default_timer()
 
     # 2) Report as running to Treeherder
-    repo_name, revision = _determine_repo_revision(data)
+    repo_name, revision = _determine_repo_revision(data, CONFIG['treeherder_host'])
 
     if CONFIG['submit_to_treeherder']:
-        job = CONFIG['job_factory'].create_job(
+        job = JOB_FACTORY.create_job(
             repository=repo_name,
             revision=revision,
             add_platform_info=True,
             dry_run=CONFIG['dry_run'],
             **CONFIG['pulse_actions_job_template']
         )
-        CONFIG['job_factory'].submit_running(job)
+        JOB_FACTORY.submit_running(job)
 
     LOG.info('#### New request ####.')
     # 3) process the message
@@ -235,18 +237,18 @@ def message_handler(data, message, *args, **kwargs):
     LOG.info('#### End of request ####.')
     end_logging(file_path)
 
-    # XXX: 5) Upload logs to S3
-
-    # 6) Submit results to Treeherder
+    # 5) Submit results to Treeherder
     if CONFIG['submit_to_treeherder']:
-        bugzilla_link = "https://bugzilla.mozilla.org/enter_bug.cgi?assigned_to=nobody%40mozilla.org&cc=armenzg%40mozilla.com&comment=Provide%20link.&component=General&form_name=enter_bug&product=Testing&short_desc=pulse_actions%20-%20Brief%20description%20of%20failure"  # flake8: noqa
+        # XXX: We will add multiple logs in the future
+        url = S3_UPLOADER.upload(file_path)
+        LOG.debug('Log uploaded to {}'.format(url))
 
-        CONFIG['job_factory'].submit_completed(
+        JOB_FACTORY.submit_completed(
             job=job,
             result='success',  # XXX: This should be a constant
             job_info_details_panel=[
                 {
-                    "url": bugzilla_link,
+                    "url": FILE_BUG,
                     "value": "bug template",
                     "content_type": "link",
                     "title": "File bug"
@@ -254,7 +256,7 @@ def message_handler(data, message, *args, **kwargs):
             ],
             log_references=[
                 {
-                    "url": "http://people.mozilla.org/~armenzg/foo.txt",
+                    "url": url,
                     # Irrelevant name since we're not providing a custom log viewer parser
                     # and we're setting the status to 'parsed'
                     "name": "foo",
