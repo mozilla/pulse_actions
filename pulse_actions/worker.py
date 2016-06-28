@@ -61,7 +61,7 @@ CONFIG = {
         'platform_info': ('linux', 'other', 'x86_64'),
     },
     'route': True,
-    'submit_to_treeherder': True,
+    'submit_to_treeherder': False,  # Disable until 'cancel_all' requests don't get submitted
     'treeherder_host': 'treeherder.mozilla.org',
 }
 
