@@ -62,7 +62,7 @@ CONFIG = {
     },
     'route': True,
     'submit_to_treeherder': True,
-    'treeherder_host': 'treeherder.allizom.org',
+    'treeherder_host': 'treeherder.mozilla.org',
 }
 
 
@@ -132,8 +132,7 @@ def main():
     if CONFIG['submit_to_treeherder']:
         S3_UPLOADER = TC_S3_Uploader(bucket_prefix='ateam/pulse-action-dev/')
         JOB_FACTORY = initialize_treeherder_submission(
-            # XXX: For now we will post only to staging
-            host='treeherder.allizom.org',
+            host=CONFIG['TREEHERDER_HOST'],
             protocol='http' if CONFIG['treeherder_host'].startswith('local') else 'https',
             client=os.environ['TREEHERDER_CLIENT_ID'],
             secret=os.environ['TREEHERDER_SECRET'],
