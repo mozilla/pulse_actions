@@ -1,6 +1,10 @@
 import logging
 
-from pulse_actions.utils.misc import whitelisted_users, filter_invalid_builders
+from pulse_actions.utils.misc import (
+    filter_invalid_builders,
+    whitelisted_users,
+    TREEHERDER
+)
 
 from mozci import TaskClusterBuildbotManager, query_jobs
 from mozci.mozci import trigger_job
@@ -9,7 +13,6 @@ from thclient import TreeherderClient
 
 LOG = logging.getLogger(__name__)
 MEMORY_SAVING_MODE = True
-TREEHERDER = 'https://%(host)s/#/jobs?repo=%(repo)s&revision=%(revision)s'
 
 
 def on_runnable_job_event(data, message, dry_run, treeherder_host, acknowledge):
