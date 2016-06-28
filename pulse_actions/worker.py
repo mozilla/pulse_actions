@@ -132,7 +132,7 @@ def main():
     if CONFIG['submit_to_treeherder']:
         S3_UPLOADER = TC_S3_Uploader(bucket_prefix='ateam/pulse-action-dev/')
         JOB_FACTORY = initialize_treeherder_submission(
-            host=CONFIG['TREEHERDER_HOST'],
+            host=CONFIG['treeherder_host'],
             protocol='http' if CONFIG['treeherder_host'].startswith('local') else 'https',
             client=os.environ['TREEHERDER_CLIENT_ID'],
             secret=os.environ['TREEHERDER_SECRET'],
