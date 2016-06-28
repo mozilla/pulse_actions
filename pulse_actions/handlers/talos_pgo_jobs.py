@@ -18,63 +18,71 @@ from pulse_actions.utils.misc import filter_invalid_builders
 LOG = logging.getLogger(__name__.split('.')[-1])
 
 
-def on_event(data, message, dry_run, acknowledge):
+def ignored(data):
+    '''It determines if the request will be processed or not.'''
+    try:
+        info = get_buildername_metadata(data['payload']['buildername'])
+        if info['build_type'] == "pgo" and \
+           info['repo_name'] in ['mozilla-inbound', 'fx-team'] and \
+           info['platform_name'] != 'win64':
+            return False
+        else:
+            return True
+    except MissingBuilderError, e:
+        LOG.warning(str(e))
+
+        return True
+
+
+def on_event(data, message, dry_run, acknowledge, **kwargs):
     """
     Whenever PGO builds are completed in mozilla-inbound or fx-team,
     we trigger the corresponding talos jobs twice.
     """
+    if ignored(data):
+        if acknowledge:
+            # We need to ack the message to remove it from our queue
+            message.ack()
+        LOG.debug("'%s' with status %i. Nothing to be done.",
+                  buildername, status)
+        return 0  # SUCCESS
+
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
     payload = data["payload"]
     status = payload["status"]
     buildername = payload["buildername"]
-    try:
-        info = get_buildername_metadata(buildername)
-    except MissingBuilderError, e:
-        LOG.warning(str(e))
-        if acknowledge:
-            # We need to ack the message to remove it from our queue
-            message.ack()
-
-        return
     revision = payload["revision"]
 
-    if info['build_type'] == "pgo" and \
-       info['repo_name'] in ['mozilla-inbound', 'fx-team'] and \
-       info['platform_name'] != 'win64':
-        # Treeherder can send us invalid builder names
-        # https://bugzilla.mozilla.org/show_bug.cgi?id=1242038
-        buildername = filter_invalid_builders(buildername)
+    # Treeherder can send us invalid builder names
+    # https://bugzilla.mozilla.org/show_bug.cgi?id=1242038
+    buildername = filter_invalid_builders(buildername)
 
-        if buildername is None:
-            if acknowledge:
-                # We need to ack the message to remove it from our queue
-                message.ack()
-            return
+    if buildername is None:
+        if acknowledge:
+            # We need to ack the message to remove it from our queue
+            message.ack()
+        return -1  # FAILURE
 
-        try:
+    try:
 
-            trigger_talos_jobs_for_build(
-                buildername=buildername,
-                revision=revision,
-                times=2,
-                priority=0,
-                dry_run=dry_run
-            )
+        trigger_talos_jobs_for_build(
+            buildername=buildername,
+            revision=revision,
+            times=2,
+            priority=0,
+            dry_run=dry_run
+        )
 
-            if acknowledge:
-                # We need to ack the message to remove it from our queue
-                message.ack()
-
-        except Exception, e:
-            # The message has not been acked so we will try again
-            LOG.warning(str(e))
-            raise
-    else:
         if acknowledge:
             # We need to ack the message to remove it from our queue
             message.ack()
 
-        LOG.debug("'%s' with status %i. Nothing to be done.",
-                  buildername, status)
+        LOG.info('We triggered talos jobs for the build.')
+        return 0  # SUCCESS
+
+    except Exception, e:
+        LOG.warning("The message has not been acknowledged so we can retry it.")
+        LOG.warning(str(e))
+        raise

@@ -9,7 +9,21 @@ from thclient import TreeherderClient
 LOG = logging.getLogger(__name__)
 
 
-def on_resultset_action_event(data, message, dry_run, treeherder_host, acknowledge):
+def ignored(data):
+    '''Ite determines if the job will be processed or not.'''
+    # We do not handle 'cancel_all' action right now, so skip it.
+    if data['action'] == "cancel_all":
+        return True
+    else:
+        return False
+
+
+def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
+    if ignored(data):
+        if acknowledge:
+            message.ack()
+        return 0  # SUCCESS
+
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
@@ -21,11 +35,6 @@ def on_resultset_action_event(data, message, dry_run, treeherder_host, acknowled
 
     treeherder_client = TreeherderClient(host=treeherder_host)
 
-    # We do not handle 'cancel_all' action right now, so skip it.
-    if action == "cancel_all":
-        if acknowledge:
-            message.ack()
-        return
     LOG.info("%s action requested by %s on repo_name %s with resultset_id: %s" % (
         data['action'],
         data["requester"],
@@ -56,9 +65,15 @@ def on_resultset_action_event(data, message, dry_run, treeherder_host, acknowled
                      'lower then normal'.format(times)
         else:
             status = 'Dry-mode, no request sent'
+    else:
+        raise Exception(
+            'We were not aware of the "{}" action. Please address the code.'.format(action)
+        )
 
     LOG.debug(status)
 
     if acknowledge:
         # We need to ack the message to remove it from our queue
         message.ack()
+
+    return 0  # SUCCESS

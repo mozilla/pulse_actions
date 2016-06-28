@@ -70,11 +70,25 @@ from thclient import TreeherderClient
 LOG = logging.getLogger(__name__.split('.')[-1])
 
 
-def on_event(data, message, dry_run, treeherder_host, acknowledge):
+def ignored(data):
+    '''It determines if the job will be processed or not.'''
+    if data['action'].capitalize() == "Backfill":
+        return False
+    else:
+        return True
+
+
+def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
     """Act upon Treeherder job events.
 
     Return if the outcome was successful or not
     """
+    if ignored(data):
+        if acknowledge:
+            # We need to ack the message to remove it from our queue
+            message.ack()
+        return 0  # SUCCESS
+
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
@@ -116,25 +130,31 @@ def on_event(data, message, dry_run, treeherder_host, acknowledge):
 
     buildername = filter_invalid_builders(buildername)
 
-    # Treeherder can send us invalid builder names
-    # https://bugzilla.mozilla.org/show_bug.cgi?id=1242038
     if buildername is None:
-        status = 'Builder %s was invalid.' % buildername[0]
+        LOG.info('Treeherder can send us invalid builder names.')
+        LOG.info('See https://bugzilla.mozilla.org/show_bug.cgi?id=1242038.')
+        LOG.warning('Builder %s is invalid.' % buildername[0])
+        return -1  # FAILURE
 
-    else:
+    elif action == "Backfill":
         # There are various actions that can be taken on a job, however, we currently
         # only process the backfill one
-        if action == "Backfill":
             manual_backfill(
                 revision=revision,
                 buildername=buildername,
                 dry_run=dry_run,
             )
-            if acknowledge:
+            if not dry_run:
                 status = 'Backfill request sent'
             else:
-                status = 'Dry-run mode, nothing was backfilled'
+                status = 'Dry-run mode, nothing was backfilled.'
             LOG.debug(status)
+
+    else:
+        LOG.error(
+            'We were not aware of the "{}" action. Please file an issue'.format(action)
+        )
+        return -1  # FAILURE
 
     if acknowledge:
         # We need to ack the message to remove it from our queue

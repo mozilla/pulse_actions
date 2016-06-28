@@ -34,6 +34,10 @@ transfer.MEMORY_SAVING_MODE = False
 transfer.SHOW_PROGRESS_BAR = False
 
 # Constants
+EXIT_CODE_JOB_RESULT_MAP = {
+    0: 'success',
+    -1: 'fail'
+}
 FILE_BUG = "https://bugzilla.mozilla.org/enter_bug.cgi?assigned_to=nobody%40mozilla.org&cc=armenzg%40mozilla.com&comment=Provide%20link.&component=General&form_name=enter_bug&product=Testing&short_desc=pulse_actions%20-%20Brief%20description%20of%20failure"  # flake8: noqa
 REQUIRED_ENV_VARIABLES = [
     'LDAP_USER',  # To post jobs to BuildApi
@@ -109,7 +113,7 @@ def main():
                 # we query production instead of stage
                 CONFIG['treeherder_host'] = pulse_actions_config['treeherder_host']
     else:
-        LOG.error('Set --treeherder-host if you\'re not using a config file')
+        LOG.error("Set --treeherder-host if you're not using a config file")
         sys.exit(1)
 
     # 5) Set few constants which are used by message_handler
@@ -202,49 +206,58 @@ def message_handler(data, message, *args, **kwargs):
     * Upload each log file to S3
     * Report the request to Treeherder first as running and then as complete
     '''
-    # 1) Start logging and timing
-    file_path = start_logging()
-    start_time = default_timer()
+    if CONFIG['route']:
+        try:
+            route(data=data, message=message, dry_run=CONFIG['dry_run'],
+                  treeherder_host=CONFIG['treeherder_host'],
+                  acknowledge=CONFIG['acknowledge'])
+        except Exception as e:
+            LOG.exception(e)
+    else:
+        LOG.info("We're not routing messages")
 
-    # 2) Report as running to Treeherder
-    repo_name, revision = _determine_repo_revision(data, CONFIG['treeherder_host'])
 
+def start_request(repo_name, revision):
+    results = {
+        'log_path': start_logging(),
+        'start_time': default_timer()
+        'treeherder_job': None
+    }
+    LOG.info('#### New request ####.')
+
+    # 1) Report as running to Treeherder
     if CONFIG['submit_to_treeherder']:
-        job = JOB_FACTORY.create_job(
+        treeherder_job = JOB_FACTORY.create_job(
             repository=repo_name,
             revision=revision,
             add_platform_info=True,
             dry_run=CONFIG['dry_run'],
             **CONFIG['pulse_actions_job_template']
         )
-        JOB_FACTORY.submit_running(job)
+        JOB_FACTORY.submit_running(treeherder_job)
+        results['treeherder_job'] = treeherder_job
 
-    LOG.info('#### New request ####.')
-    # 3) process the message
-    if CONFIG['route']:
-        try:
-            route(data, message, CONFIG['dry_run'], CONFIG['treeherder_host'],
-                  CONFIG['acknowledge'])
-        except Exception as e:
-            LOG.exception(e)
+    return results
 
-    # 4) We're done - let's stop the logging
+
+def end_request(exit_code, data, log_path, treeherder_job, start_time):
+    '''End logging, upload to S3 and submit to Treeherder'''
+    # 1) Let's stop the logging
     LOG.info('Message {}, took {} seconds to execute'.format(
         str(data),
         str(int(int(default_timer() - start_time)))))
 
-    LOG.info('#### End of request ####.')
-    end_logging(file_path)
-
-    # 5) Submit results to Treeherder
     if CONFIG['submit_to_treeherder']:
+        if treeherder_job is None:
+            LOG.error("We should not have an empty job if we're submitting to Treeherder")
+
         # XXX: We will add multiple logs in the future
-        url = S3_UPLOADER.upload(file_path)
+        url = S3_UPLOADER.upload(log_path)
         LOG.debug('Log uploaded to {}'.format(url))
 
         JOB_FACTORY.submit_completed(
-            job=job,
-            result='success',  # XXX: This should be a constant
+            job=treeherder_job,
+            result=EXIT_CODE_JOB_RESULT_MAP[exit_code],
             job_info_details_panel=[
                 {
                     "url": FILE_BUG,
@@ -263,28 +276,57 @@ def message_handler(data, message, *args, **kwargs):
                 }
             ],
         )
+        LOG.info("Created Treeherder 'Sch' job.")
+
+    LOG.info('#### End of request ####.')
+    end_logging(file_path)
 
 
-def route(data, message, dry_run, treeherder_host, acknowledge):
+def route(data, message, **kwargs):
     ''' We need to map every exchange/topic to a specific handler.
 
     We return if the request was processed succesfully or not
     '''
+    exit_code = None
+
     # XXX: This is not ideal; we should define in the config which exchange uses which handler
     # XXX: Specify here which treeherder host
     if 'job_id' in data:
-        exit_code = treeherder_job_action.on_event(data, message, dry_run, treeherder_host,
-                                                  acknowledge)
+        ignored = treeherder_job_event.ignored
+        handler = treeherder_job_event.on_event
+
     elif 'buildernames' in data:
-        exit_code = treeherder_add_new_jobs.on_runnable_job_event(data, message, dry_run,
-                                                              treeherder_host, acknowledge)
+        ignored = treeherder_runnable.ignored
+        handler = treeherder_runnable.on_event
+
     elif 'resultset_id' in data:
-        exit_code = treeherder_push_action.on_resultset_action_event(data, message, dry_run,
-                                                                   treeherder_host, acknowledge)
+        ignored = treeherder_resultset.ignored
+        handler = treeherder_resultset.on_event
+
     elif data['_meta']['exchange'] == 'exchange/build/normalized':
-        exit_code = talos_pgo_jobs.on_event(data, message, dry_run, acknowledge)
+        ignored = talos.ignored
+        handler = talos.on_event
+
     else:
         LOG.error("Exchange not supported by router (%s)." % data)
+
+    if ignored(data):
+        exit_code = 0
+
+    else:
+        # 1) Log request
+        repo_name, revision = _determine_repo_revision(data, CONFIG['treeherder_host'])
+        results = start_request(repo_name=repo_name, revision=revision)
+
+        # 2) Process request
+        exit_code = handler(data=data, message=message, repo_name=repo_name,
+                            revision=revision, dry_run=dry_run,
+                            treeherder_host=treeherder_host, acknowledge=acknowledge)
+
+        # 3) Submit results to Treeherder
+        end_request(exit_code=exit_code, **results)
+
+    assert exit_code is not None and type(exit_code) == int
 
     return exit_code
 
