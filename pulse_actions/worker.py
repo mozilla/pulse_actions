@@ -61,7 +61,7 @@ CONFIG = {
         'platform_info': ('linux', 'other', 'x86_64'),
     },
     'route': True,
-    'submit_to_treeherder': False,  # XXX: Change when ready
+    'submit_to_treeherder': True,
     'treeherder_host': 'treeherder.allizom.org',
 }
 
