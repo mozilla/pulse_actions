@@ -26,7 +26,13 @@ def on_runnable_job_event(data, message, dry_run, treeherder_host, acknowledge):
     repo_name = data["project"]
     requester = data["requester"]
     resultset_id = data["resultset_id"]
-    buildernames = data["buildernames"]
+    if "buildernames" in data:
+        buildernames = data["buildernames"]
+    elif "requested_jobs" in data:
+        buildernames = data["requested_jobs"]
+    else:
+        LOG.error("Appropriate job requests not found in the pulse message.")
+        return -1
 
     resultset = treeherder_client.get_resultsets(repo_name, id=resultset_id)[0]
     revision = resultset["revision"]
