@@ -273,7 +273,7 @@ def message_handler(data, message, *args, **kwargs):
 def route(data, message, dry_run, treeherder_host, acknowledge):
     ''' We need to map every exchange/topic to a specific handler.
 
-    We return if the request was processed succesfully or not
+    We return if the request was processed successfully or not
     '''
     # XXX: This is not ideal; we should define in the config which exchange uses which handler
     # XXX: Specify here which treeherder host
