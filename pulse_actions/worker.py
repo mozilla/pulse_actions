@@ -290,7 +290,7 @@ def end_request(exit_code, data, log_path, treeherder_job, start_time):
 def route(data, message, **kwargs):
     ''' We need to map every exchange/topic to a specific handler.
 
-    We return if the request was processed succesfully or not
+    We return if the request was processed successfully or not
     '''
     exit_code = None
 
