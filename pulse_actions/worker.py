@@ -279,13 +279,13 @@ def route(data, message, dry_run, treeherder_host, acknowledge):
     # XXX: Specify here which treeherder host
     if 'job_id' in data:
         exit_code = treeherder_job_action.on_event(data, message, dry_run, treeherder_host,
-                                                  acknowledge)
+                                                   acknowledge)
     elif 'buildernames' in data:
         exit_code = treeherder_add_new_jobs.on_runnable_job_event(data, message, dry_run,
-                                                              treeherder_host, acknowledge)
+                                                                  treeherder_host, acknowledge)
     elif 'resultset_id' in data:
         exit_code = treeherder_push_action.on_resultset_action_event(data, message, dry_run,
-                                                                   treeherder_host, acknowledge)
+                                                                     treeherder_host, acknowledge)
     elif data['_meta']['exchange'] == 'exchange/build/normalized':
         exit_code = talos_pgo_jobs.on_event(data, message, dry_run, acknowledge)
     else:
