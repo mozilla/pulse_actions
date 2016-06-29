@@ -15,7 +15,18 @@ LOG = logging.getLogger(__name__)
 MEMORY_SAVING_MODE = True
 
 
-def on_runnable_job_event(data, message, dry_run, treeherder_host, acknowledge):
+def ignored(data):
+    '''It determines if the job will be processed or not.'''
+    return False
+
+
+def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
+    if ignored(data):
+        if acknowledge:
+            # We need to ack the message to remove it from our queue
+            message.ack()
+        return 0  # SUCCESS
+
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
@@ -49,31 +60,6 @@ def on_runnable_job_event(data, message, dry_run, treeherder_host, acknowledge):
         # We want to see this in the alerts
         LOG.error("Notice that we're letting %s schedule jobs for %s." % (requester,
                                                                           treeherder_link))
-    '''
-    # Everyone can press the button, but only authorized users can trigger jobs
-    # TODO: remove this when proper LDAP identication is set up on TH
-    if not (requester.endswith('@mozilla.com') or author == requester or
-            whitelisted_users(requester)):
-
-        if acknowledge:
-            # Remove message from pulse queue
-            message.ack()
-
-        # We publish a message saying we will not trigger the job
-        pulse_message = {
-            'resultset_id': resultset_id,
-            'requester': requester,
-            'status': "Could not determine if the user is authorized, nothing was triggered."}
-        routing_key = '{}.{}'.format(repo_name, 'runnable')
-        try:
-            message_sender.publish_message(pulse_message, routing_key)
-        except:
-            LOG.warning("Failed to publish message over pulse stream.")
-
-        LOG.error("Requester %s is not allowed to trigger jobs on %s." %
-                  (requester, treeherder_link))
-        return  # Raising an exception adds too much noise
-    '''
 
     LOG.info("New jobs requested by %s for %s" % (requester, treeherder_link))
     LOG.info("List of builders:")
@@ -88,7 +74,7 @@ def on_runnable_job_event(data, message, dry_run, treeherder_host, acknowledge):
         if acknowledge:
             # We need to ack the message to remove it from our queue
             message.ack()
-        return
+        return -1  # FAILURE
 
     builders_graph, other_builders_to_schedule = buildbot_bridge.buildbot_graph_builder(
         builders=buildernames,
@@ -127,3 +113,5 @@ def on_runnable_job_event(data, message, dry_run, treeherder_host, acknowledge):
     if acknowledge:
         # We need to ack the message to remove it from our queue
         message.ack()
+
+    return 0  # SUCCESS
