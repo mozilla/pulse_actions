@@ -280,7 +280,7 @@ def route(data, message, dry_run, treeherder_host, acknowledge):
     if 'job_id' in data:
         exit_code = treeherder_job_action.on_event(data, message, dry_run, treeherder_host,
                                                    acknowledge)
-    elif 'buildernames' in data:
+    elif 'buildernames' in data or 'requested_jobs' in data:
         exit_code = treeherder_add_new_jobs.on_runnable_job_event(data, message, dry_run,
                                                                   treeherder_host, acknowledge)
     elif 'resultset_id' in data:
