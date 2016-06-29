@@ -1,0 +1,11 @@
+--- pulse_actions/worker.py
++++ pulse_actions/worker.py
+@@ -300,7 +300,7 @@ def route(data, message, **kwargs):
+         ignored = treeherder_job_event.ignored
+         handler = treeherder_job_event.on_event
+ 
+-    elif 'buildernames' in data:
++    elif 'buildernames' in data or 'requested_jobs' in data:
+         ignored = treeherder_add_new_jobs.ignored
+         handler = treeherder_add_new_jobs.on_event
+ 
