@@ -225,7 +225,7 @@ def message_handler(data, message, *args, **kwargs):
 def start_request(repo_name, revision):
     results = {
         'log_path': start_logging(),
-        'start_time': default_timer()
+        'start_time': default_timer(),
         'treeherder_job': None
     }
     LOG.info('#### New request ####.')
@@ -284,7 +284,7 @@ def end_request(exit_code, data, log_path, treeherder_job, start_time):
         LOG.info("Created Treeherder 'Sch' job.")
 
     LOG.info('#### End of request ####.')
-    end_logging(file_path)
+    end_logging(log_path)
 
 
 def route(data, message, **kwargs):
@@ -301,16 +301,16 @@ def route(data, message, **kwargs):
         handler = treeherder_job_event.on_event
 
     elif 'buildernames' in data:
-        ignored = treeherder_runnable.ignored
-        handler = treeherder_runnable.on_event
+        ignored = treeherder_add_new_jobs.ignored
+        handler = treeherder_add_new_jobs.on_event
 
     elif 'resultset_id' in data:
-        ignored = treeherder_resultset.ignored
-        handler = treeherder_resultset.on_event
+        ignored = treeherder_push_action.ignored
+        handler = treeherder_push_action.on_event
 
     elif data['_meta']['exchange'] == 'exchange/build/normalized':
-        ignored = talos.ignored
-        handler = talos.on_event
+        ignored = talos_pgo_jobs.ignored
+        handler = talos_pgo_jobs.on_event
 
     else:
         LOG.error("Exchange not supported by router (%s)." % data)
@@ -321,15 +321,14 @@ def route(data, message, **kwargs):
     else:
         # 1) Log request
         repo_name, revision = _determine_repo_revision(data, CONFIG['treeherder_host'])
-        results = start_request(repo_name=repo_name, revision=revision)
+        end_request_kwargs = start_request(repo_name=repo_name, revision=revision)
 
         # 2) Process request
         exit_code = handler(data=data, message=message, repo_name=repo_name,
-                            revision=revision, dry_run=dry_run,
-                            treeherder_host=treeherder_host, acknowledge=acknowledge)
+                            revision=revision, **kwargs)
 
         # 3) Submit results to Treeherder
-        end_request(exit_code=exit_code, **results)
+        end_request(exit_code=exit_code, data=data, **end_request_kwargs)
 
     assert exit_code is not None and type(exit_code) == int
 
