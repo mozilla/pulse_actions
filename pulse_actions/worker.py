@@ -260,10 +260,6 @@ def end_request(exit_code, data, log_path, treeherder_job, start_time):
         url = S3_UPLOADER.upload(log_path)
         LOG.debug('Log uploaded to {}'.format(url))
 
-        # XXX: Do something more elegant
-        if exit_code is None:
-            exit_code = 0
-
         JOB_FACTORY.submit_completed(
             job=treeherder_job,
             result=EXIT_CODE_JOB_RESULT_MAP[exit_code],
@@ -335,6 +331,10 @@ def route(data, message, **kwargs):
         # 2) Process request
         exit_code = handler(data=data, message=message, repo_name=repo_name,
                             revision=revision, **kwargs)
+
+        # XXX: Until handlers can guarantee an exit_code
+        if exit_code is None:
+            exit_code = 0
 
         # 3) Submit results to Treeherder
         end_request(exit_code=exit_code, data=data, **end_request_kwargs)
