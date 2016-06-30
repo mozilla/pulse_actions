@@ -44,14 +44,13 @@ def on_event(data, message, dry_run, acknowledge, **kwargs):
             # We need to ack the message to remove it from our queue
             message.ack()
         LOG.debug("'%s' with status %i. Nothing to be done.",
-                  buildername, status)
+                  data['payload']['buildername'], data['payload']['status'])
         return 0  # SUCCESS
 
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
     payload = data["payload"]
-    status = payload["status"]
     buildername = payload["buildername"]
     revision = payload["revision"]
 
