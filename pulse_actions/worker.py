@@ -276,7 +276,7 @@ def end_request(exit_code, data, log_path, treeherder_job, start_time):
                     "url": url,
                     # Irrelevant name since we're not providing a custom log viewer parser
                     # and we're setting the status to 'parsed'
-                    "name": "foo",
+                    "name": "buildbot_text",
                     "parse_status": "parsed"
                 }
             ],
