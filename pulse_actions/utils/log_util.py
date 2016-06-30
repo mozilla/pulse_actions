@@ -45,7 +45,8 @@ def setup_logging(logging_level):
     console = logging.StreamHandler()
     console.setLevel(logging_level)
     # No need to track asctime as Papertrail logs times
-    formatter = logging.Formatter('%(name)s\t %(message)s')
+    # Keep levelname for error() messages to alert
+    formatter = logging.Formatter('%(name)s\t %(levelname)s:\t %(message)s')
     console.setFormatter(formatter)
     LOG.addHandler(console)
 
