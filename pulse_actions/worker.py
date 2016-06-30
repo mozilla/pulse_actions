@@ -292,13 +292,17 @@ def route(data, message, **kwargs):
 
     We return if the request was processed successfully or not
     '''
+    # XXX: This allows us to ignore certain handlers. A cleaner code is wanted.
+    def _ignore_hack(data):
+        return True
+
     exit_code = None
 
     # XXX: This is not ideal; we should define in the config which exchange uses which handler
     # XXX: Specify here which treeherder host
     if 'job_id' in data:
-        ignored = treeherder_job_event.ignored
-        handler = treeherder_job_event.on_event
+        ignored = treeherder_job_action.ignored
+        handler = treeherder_job_action.on_event
 
     elif 'buildernames' in data or 'requested_jobs' in data:
         ignored = treeherder_add_new_jobs.ignored
@@ -309,7 +313,8 @@ def route(data, message, **kwargs):
         handler = treeherder_push_action.on_event
 
     elif data['_meta']['exchange'] == 'exchange/build/normalized':
-        ignored = talos_pgo_jobs.ignored
+        # XXX: We want to ignore this handler
+        ignored = _ignore_hack
         handler = talos_pgo_jobs.on_event
 
     else:
