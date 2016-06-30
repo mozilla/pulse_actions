@@ -77,7 +77,7 @@ def main():
     options = parse_args()
 
     # 1) Set up logging
-    if options.debug:
+    if options.debug or os.environ.get('LOGGING_LEVEL') == 'debug':
         LOG = setup_logging(logging.DEBUG)
     else:
         LOG = setup_logging(logging.INFO)
