@@ -65,7 +65,7 @@ CONFIG = {
         'platform_info': ('linux', 'other', 'x86_64'),
     },
     'route': True,
-    'submit_to_treeherder': True,
+    'submit_to_treeherder': False,
     'treeherder_host': 'treeherder.mozilla.org',
 }
 
@@ -128,6 +128,8 @@ def main():
         CONFIG['submit_to_treeherder'] = True
     elif options.dry_run:
         CONFIG['submit_to_treeherder'] = False
+    elif os.environ.get('SUBMIT_TO_TREEHERDER'):
+        CONFIG['submit_to_treeherder'] = True
 
     if options.acknowledge:
         CONFIG['acknowledge'] = True
