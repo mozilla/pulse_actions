@@ -51,6 +51,7 @@ REQUIRED_ENV_VARIABLES = [
 ]
 # Global variables
 LOG = None
+TH_SCH_JOB = "Treeherder 'Sch' job"  # This guarantees using a proper filter for Papertrail
 # These values are used inside of message_handler
 CONFIG = {
     'acknowledge': True,
@@ -226,7 +227,9 @@ def message_handler(data, message, *args, **kwargs):
 
 def start_request(repo_name, revision):
     results = {
-        'log_path': start_logging(),
+        # Set the level to INFO to ensure that no debug messages could leak anything
+        # to the public
+        'log_path': start_logging(log_level=logging.INFO),
         'start_time': default_timer(),
         'treeherder_job': None
     }
@@ -246,7 +249,7 @@ def start_request(repo_name, revision):
             results['treeherder_job'] = treeherder_job
         except Exception as e:
             LOG.error(str(e))
-            LOG.warning("We will have to skip scheduling a Treeherder 'Sch' job")
+            LOG.warning("We will skip scheduling a {}".format(TH_SCH_JOB))
             # Even though the default value is None by being explicit we won't regress by mistake
             results['treeherder_job'] = None
 
@@ -262,7 +265,7 @@ def end_request(exit_code, data, log_path, treeherder_job, start_time):
 
     if CONFIG['submit_to_treeherder']:
         if treeherder_job is None:
-            LOG.warning("As mentioned above we did not schedule a Treeherder 'Sch' job.")
+            LOG.warning("As mentioned above we did not schedule a {}.".format(TH_SCH_JOB))
         else:
             # XXX: We will add multiple logs in the future
             url = S3_UPLOADER.upload(log_path)
@@ -289,7 +292,7 @@ def end_request(exit_code, data, log_path, treeherder_job, start_time):
                     }
                 ],
             )
-            LOG.info("Created Treeherder 'Sch' job.")
+            LOG.info("Created {}.".format(TH_SCH_JOB))
 
     LOG.info('#### End of request ####.')
     end_logging(log_path)
