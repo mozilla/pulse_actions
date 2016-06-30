@@ -314,7 +314,7 @@ def route(data, message, **kwargs):
 
     elif data['_meta']['exchange'] == 'exchange/build/normalized':
         # XXX: We want to ignore this handler
-        ignored = talos_pgo_jobs._ignored_hack
+        ignored = talos_pgo_jobs._ignore_hack
         handler = talos_pgo_jobs.on_event
 
     else:
