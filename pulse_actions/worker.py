@@ -267,9 +267,14 @@ def end_request(exit_code, data, log_path, treeherder_job, start_time):
         if treeherder_job is None:
             LOG.warning("As mentioned above we did not schedule a {}.".format(TH_SCH_JOB))
         else:
-            # XXX: We will add multiple logs in the future
-            url = S3_UPLOADER.upload(log_path)
-            LOG.debug('Log uploaded to {}'.format(url))
+            try:
+                # XXX: We will add multiple logs in the future
+                url = S3_UPLOADER.upload(log_path)
+                LOG.debug('Log uploaded to {}'.format(url))
+            except:
+                LOG.error(str(e))
+                LOG.error("We have failed to upload to S3; Let's not fail to complete the job")
+                url = 'http://people.mozilla.org/~armenzg/failure.html'
 
             JOB_FACTORY.submit_completed(
                 job=treeherder_job,
