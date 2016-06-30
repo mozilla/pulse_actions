@@ -65,7 +65,7 @@ CONFIG = {
         'platform_info': ('linux', 'other', 'x86_64'),
     },
     'route': True,
-    'submit_to_treeherder': True,
+    'submit_to_treeherder': False,
     'treeherder_host': 'treeherder.mozilla.org',
 }
 
