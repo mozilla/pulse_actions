@@ -332,14 +332,14 @@ def route(data, message, **kwargs):
         exit_code = handler(data=data, message=message, repo_name=repo_name,
                             revision=revision, **kwargs)
 
+        # XXX: Until handlers can guarantee an exit_code
+        if exit_code is None:
+            exit_code = 0
+
         # 3) Submit results to Treeherder
         end_request(exit_code=exit_code, data=data, **end_request_kwargs)
 
-    # XXX: Do something more elegant
-    if exit_code is None:
-        exit_code = 0
-
-    assert type(exit_code) == int
+    assert exit_code is not None and type(exit_code) == int
 
     return exit_code
 
