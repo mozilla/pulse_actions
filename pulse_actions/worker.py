@@ -260,6 +260,10 @@ def end_request(exit_code, data, log_path, treeherder_job, start_time):
         url = S3_UPLOADER.upload(log_path)
         LOG.debug('Log uploaded to {}'.format(url))
 
+        # XXX: Do something more elegant
+        if exit_code is None:
+            exit_code = 0
+
         JOB_FACTORY.submit_completed(
             job=treeherder_job,
             result=EXIT_CODE_JOB_RESULT_MAP[exit_code],
