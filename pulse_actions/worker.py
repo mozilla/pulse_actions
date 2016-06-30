@@ -241,8 +241,14 @@ def start_request(repo_name, revision):
             dry_run=CONFIG['dry_run'],
             **CONFIG['pulse_actions_job_template']
         )
-        JOB_FACTORY.submit_running(treeherder_job)
-        results['treeherder_job'] = treeherder_job
+        try:
+            JOB_FACTORY.submit_running(treeherder_job)
+            results['treeherder_job'] = treeherder_job
+        except Exception as e:
+            LOG.error(str(e))
+            LOG.warning("We will have to skip scheduling a Treeherder 'Sch' job")
+            # Even though the default value is None by being explicit we won't regress by mistake
+            results['treeherder_job'] = None
 
     return results
 
@@ -256,34 +262,34 @@ def end_request(exit_code, data, log_path, treeherder_job, start_time):
 
     if CONFIG['submit_to_treeherder']:
         if treeherder_job is None:
-            LOG.error("We should not have an empty job if we're submitting to Treeherder")
+            LOG.warning("As mentioned above we did not schedule a Treeherder 'Sch' job.")
+        else:
+            # XXX: We will add multiple logs in the future
+            url = S3_UPLOADER.upload(log_path)
+            LOG.debug('Log uploaded to {}'.format(url))
 
-        # XXX: We will add multiple logs in the future
-        url = S3_UPLOADER.upload(log_path)
-        LOG.debug('Log uploaded to {}'.format(url))
-
-        JOB_FACTORY.submit_completed(
-            job=treeherder_job,
-            result=EXIT_CODE_JOB_RESULT_MAP[exit_code],
-            job_info_details_panel=[
-                {
-                    "url": FILE_BUG,
-                    "value": "bug template",
-                    "content_type": "link",
-                    "title": "File bug"
-                },
-            ],
-            log_references=[
-                {
-                    "url": url,
-                    # Irrelevant name since we're not providing a custom log viewer parser
-                    # and we're setting the status to 'parsed'
-                    "name": "buildbot_text",
-                    "parse_status": "parsed"
-                }
-            ],
-        )
-        LOG.info("Created Treeherder 'Sch' job.")
+            JOB_FACTORY.submit_completed(
+                job=treeherder_job,
+                result=EXIT_CODE_JOB_RESULT_MAP[exit_code],
+                job_info_details_panel=[
+                    {
+                        "url": FILE_BUG,
+                        "value": "bug template",
+                        "content_type": "link",
+                        "title": "File bug"
+                    },
+                ],
+                log_references=[
+                    {
+                        "url": url,
+                        # Irrelevant name since we're not providing a custom log viewer parser
+                        # and we're setting the status to 'parsed'
+                        "name": "buildbot_text",
+                        "parse_status": "parsed"
+                    }
+                ],
+            )
+            LOG.info("Created Treeherder 'Sch' job.")
 
     LOG.info('#### End of request ####.')
     end_logging(log_path)
