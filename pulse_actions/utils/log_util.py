@@ -18,7 +18,7 @@ def start_logging(log_level=logging.INFO):
     log_path = os.path.join(gettempdir(), str(uuid4()))
     file_handler = logging.FileHandler(log_path)
     file_handler.setLevel(log_level)
-    file_handler.setFormatter(FORMATTER)
+    file_handler.setFormatter(logging.Formatter('%(name)20s %(message)s')
 
     LOG.addHandler(file_handler)
     ALL_HANDLERS[log_path] = file_handler
