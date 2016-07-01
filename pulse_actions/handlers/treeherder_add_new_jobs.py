@@ -11,7 +11,7 @@ from mozci.mozci import trigger_job
 from mozci.sources import buildjson, buildbot_bridge
 from thclient import TreeherderClient
 
-LOG = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__.split('.')[-1])
 MEMORY_SAVING_MODE = True
 
 

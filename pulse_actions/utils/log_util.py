@@ -18,9 +18,13 @@ def start_logging(log_level=logging.INFO):
     log_path = os.path.join(gettempdir(), str(uuid4()))
     file_handler = logging.FileHandler(log_path)
     file_handler.setLevel(log_level)
-    file_handler.setFormatter(FORMATTER)
+    # Developers only care about the messages (no asctime or level names)
+    # The name of the modules are left in case they want to debug pulse_actions
+    file_handler.setFormatter(logging.Formatter('%(name)20s %(message)s'))
 
     LOG.addHandler(file_handler)
+    LOG.info("This log was produced by https://github.com/mozilla/pulse_actions "
+             "in case you want to help us out! :D")
     ALL_HANDLERS[log_path] = file_handler
     return log_path
 

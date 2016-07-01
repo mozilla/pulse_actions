@@ -6,7 +6,7 @@ from mozci.ci_manager import BuildAPIManager
 from mozci.sources import buildjson
 from thclient import TreeherderClient
 
-LOG = logging.getLogger(__name__)
+LOG = logging.getLogger(__name__.split('.')[-1])
 
 
 def ignored(data):
