@@ -20,7 +20,7 @@ def start_logging(log_level=logging.INFO):
     file_handler.setLevel(log_level)
     # Developers only care about the messages (no asctime or level names)
     # The name of the modules are left in case they want to debug pulse_actions
-    file_handler.setFormatter(logging.Formatter('%(name)20s %(message)s'))
+    file_handler.setFormatter(logging.Formatter('%(name)s %(message)s'))
 
     LOG.addHandler(file_handler)
     LOG.info("This log was produced by https://github.com/mozilla/pulse_actions "
