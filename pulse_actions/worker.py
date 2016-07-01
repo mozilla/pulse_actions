@@ -72,7 +72,7 @@ CONFIG = {
 
 
 def main():
-    global CONFIG, LOG, JOB_FACTORY, S3_UPLOADER
+    global CONFIG, LOG, JOB_FACTORY
 
     # 0) Parse the command line arguments
     options = parse_args()
@@ -142,7 +142,6 @@ def main():
 
     # 6) Set up the treeherder submitter
     if CONFIG['submit_to_treeherder']:
-        S3_UPLOADER = TC_S3_Uploader(bucket_prefix='ateam/pulse-action-dev/')
         JOB_FACTORY = initialize_treeherder_submission(
             host=CONFIG['treeherder_host'],
             protocol='http' if CONFIG['treeherder_host'].startswith('local') else 'https',
@@ -269,9 +268,10 @@ def end_request(exit_code, data, log_path, treeherder_job, start_time):
         else:
             try:
                 # XXX: We will add multiple logs in the future
-                url = S3_UPLOADER.upload(log_path)
+                s3_uploader = TC_S3_Uploader(bucket_prefix='ateam/pulse-action-dev/')
+                url = s3_uploader.upload(log_path)
                 LOG.debug('Log uploaded to {}'.format(url))
-            except:
+            except Exception as e:
                 LOG.error(str(e))
                 LOG.error("We have failed to upload to S3; Let's not fail to complete the job")
                 url = 'http://people.mozilla.org/~armenzg/failure.html'
