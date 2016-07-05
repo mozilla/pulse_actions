@@ -84,6 +84,15 @@ def main():
         LOG = setup_logging(logging.INFO)
 
     # 2) Check required environment variables
+    if options.load_env_variables:
+        with open('env_variables.json') as file:
+            env_variables = json.load(file)
+
+            for env, value in env_variables.iteritems():
+                os.environ[env] = value
+                # Do not print the value as it could be a secret
+                LOG.info('Set {}'.format(env))
+
     fail_check = False
     for env in REQUIRED_ENV_VARIABLES:
         if env not in os.environ:
@@ -406,6 +415,10 @@ def parse_args(argv=None):
     parser.add_argument('--do-not-route', action="store_true", dest="do_not_route",
                         help='This is useful if you do not care about processing Pulse '
                              'messages but want to test the overall system.')
+
+    parser.add_argument('--load-env-variables', action="store_true", dest="load_env_variables",
+                        help='It can be painful having to load all env variables. '
+                             'This option will load them from env_variables.txt')
 
     parser.add_argument('--memory-saving', action='store_true', dest="memory_saving",
                         help='Enable memory saving. It is good for Heroku')

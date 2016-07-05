@@ -6,3 +6,4 @@ dist
 .cache/
 .coverage
 requirements.txt
+env_variables.json
