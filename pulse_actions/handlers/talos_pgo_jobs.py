@@ -23,7 +23,7 @@ def ignored(data):
     try:
         info = get_buildername_metadata(data['payload']['buildername'])
         if info['build_type'] == "pgo" and \
-           info['repo_name'] in ['mozilla-inbound', 'fx-team'] and \
+           info['repo_name'] in ('mozilla-inbound', 'fx-team', 'autoland') and \
            info['platform_name'] != 'win64':
             return False
         else:
