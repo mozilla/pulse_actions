@@ -58,8 +58,9 @@ def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
     if not (requester.endswith('@mozilla.com') or author == requester or
             whitelisted_users(requester)):
         # We want to see this in the alerts
-        LOG.error("Notice that we're letting %s schedule jobs for %s." % (requester,
-                                                                          treeherder_link))
+        LOG.warning("Notice that we're letting {} schedule jobs for {}.".format(
+            requester, treeherder_link)
+        )
 
     LOG.info("New jobs requested by %s for %s" % (requester, treeherder_link))
     LOG.info("List of builders:")
