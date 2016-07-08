@@ -318,7 +318,7 @@ def route(data, message, **kwargs):
     We return if the request was processed successfully or not
     '''
     exit_code = None
-    post_to_treeherder = None
+    post_to_treeherder = True
 
     # XXX: This is not ideal; we should define in the config which exchange uses which handler
     # XXX: Specify here which treeherder host
