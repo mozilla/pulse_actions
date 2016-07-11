@@ -1,5 +1,5 @@
 # Main dependencies
-mozci==0.41.0
+mozci==0.42.0
 pulse_replay==0.2.2
 treeherder_submitter==0.3.0
 taskcluster_s3_uploader==0.3.1
@@ -10,6 +10,7 @@ ijson==2.2
 keyring==6.0
 progressbar==2.3
 pushlog-client==0.5.0
+PyYAML==3.11
 redo==1.5
 requests==2.10.0
 taskcluster==0.3.4
