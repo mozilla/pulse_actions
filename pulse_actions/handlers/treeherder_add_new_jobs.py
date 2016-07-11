@@ -47,7 +47,7 @@ def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
         return -1
 
     # These are there as blank strings in non-try pulse messages
-    decision_task_id = data["decisionTaskId"]
+    decision_task_id = data["decisionTaskID"]
 
     resultset = treeherder_client.get_resultsets(repo_name, id=resultset_id)[0]
     revision = resultset["revision"]
