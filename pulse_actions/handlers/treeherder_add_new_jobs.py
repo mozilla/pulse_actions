@@ -9,6 +9,7 @@ from pulse_actions.utils.misc import (
 from mozci import TaskClusterBuildbotManager, query_jobs
 from mozci.mozci import trigger_job
 from mozci.sources import buildjson, buildbot_bridge
+from mozci.taskcluster import TaskClusterManager
 from thclient import TreeherderClient
 
 LOG = logging.getLogger(__name__.split('.')[-1])
@@ -38,12 +39,15 @@ def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
     requester = data["requester"]
     resultset_id = data["resultset_id"]
     if "buildernames" in data:
-        buildernames = data["buildernames"]
+        requested_jobs = data["buildernames"]
     elif "requested_jobs" in data:
-        buildernames = data["requested_jobs"]
+        requested_jobs = data["requested_jobs"]
     else:
         LOG.error("Appropriate job requests not found in the pulse message.")
         return -1
+
+    # These are there as blank strings in non-try pulse messages
+    decision_task_id = data["decisionTaskId"]
 
     resultset = treeherder_client.get_resultsets(repo_name, id=resultset_id)[0]
     revision = resultset["revision"]
@@ -63,11 +67,26 @@ def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
         )
 
     LOG.info("New jobs requested by %s for %s" % (requester, treeherder_link))
-    LOG.info("List of builders:")
-    for b in buildernames:
+    LOG.info("List of requested jobs:")
+    for b in requested_jobs:
         LOG.info("- %s" % b)
 
+    # Handle TC tasks separately
+    task_labels = [x for x in requested_jobs if x.startswith('TaskLabel==')]
+    buildernames = list(set(requested_jobs) - set(task_labels))
+
     buildernames = filter_invalid_builders(buildernames)
+
+    # Scheduling TaskCluster jobs
+    # Make sure that decision task id is not null and task_labels are there to schedule
+    if task_labels and len(decision_task_id):
+        try:
+            mgr = TaskClusterManager(dry_run=dry_run)
+            mgr.schedule_action_task(decision_task_id=decision_task_id,
+                                     task_labels=task_labels)
+        except Exception, e:
+            LOG.warning(str(e))
+            raise
 
     # Treeherder can send us invalid builder names
     # https://bugzilla.mozilla.org/show_bug.cgi?id=1242038
