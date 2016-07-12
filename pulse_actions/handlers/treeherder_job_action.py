@@ -133,7 +133,7 @@ def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
     if buildername is None:
         LOG.info('Treeherder can send us invalid builder names.')
         LOG.info('See https://bugzilla.mozilla.org/show_bug.cgi?id=1242038.')
-        LOG.warning('Builder %s is invalid.' % buildername[0])
+        LOG.warning('Builder %s is invalid.' % buildername)
         return -1  # FAILURE
 
     elif action == "Backfill":
