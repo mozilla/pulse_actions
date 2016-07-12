@@ -34,9 +34,11 @@ transfer.MEMORY_SAVING_MODE = False
 transfer.SHOW_PROGRESS_BAR = False
 
 # Constants
+JOB_SUCCESS = 0
+JOB_FAILURE = -1
 EXIT_CODE_JOB_RESULT_MAP = {
-    0: 'success',
-    -1: 'fail'
+    JOB_SUCCESS: 'success',
+    JOB_FAILURE: 'fail'
 }
 FILE_BUG = "https://bugzilla.mozilla.org/enter_bug.cgi?assigned_to=nobody%40mozilla.org&cc=armenzg%40mozilla.com&comment=Provide%20link.&component=General&form_name=enter_bug&product=Testing&short_desc=pulse_actions%20-%20Brief%20description%20of%20failure"  # flake8: noqa
 REQUIRED_ENV_VARIABLES = [
@@ -317,7 +319,7 @@ def route(data, message, **kwargs):
 
     We return if the request was processed successfully or not
     '''
-    exit_code = None
+    exit_code = JOB_FAILURE
     post_to_treeherder = True
 
     # XXX: This is not ideal; we should define in the config which exchange uses which handler
@@ -344,15 +346,19 @@ def route(data, message, **kwargs):
         LOG.error("Exchange not supported by router (%s)." % data)
 
     if not post_to_treeherder:
-        exit_code = handler(data=data, message=message, **kwargs)
+        try:
+            exit_code = handler(data=data, message=message, **kwargs)
+        except Exception as e:
+            LOG.exception(e)
+            exit_code = JOB_FAILURE
 
         # XXX: Until handlers can guarantee an exit_code
         if exit_code is None:
-            exit_code = 0
+            exit_code = JOB_SUCCESS
 
     elif ignored(data):
         LOG.debug("We're not going to process this message")
-        exit_code = 0
+        exit_code = JOB_SUCCESS
 
     else:
         # 1) Log request
@@ -360,17 +366,21 @@ def route(data, message, **kwargs):
         end_request_kwargs = start_request(repo_name=repo_name, revision=revision)
 
         # 2) Process request
-        exit_code = handler(data=data, message=message, repo_name=repo_name,
-                            revision=revision, **kwargs)
+        try:
+            exit_code = handler(data=data, message=message, repo_name=repo_name,
+                                revision=revision, **kwargs)
+        except Exception as e:
+            LOG.exception(e)
+            exit_code = JOB_FAILURE
 
         # XXX: Until handlers can guarantee an exit_code
         if exit_code is None:
-            exit_code = 0
+            exit_code = JOB_SUCCESS
 
         # 3) Submit results to Treeherder
         end_request(exit_code=exit_code, data=data, **end_request_kwargs)
 
-    assert exit_code is not None and type(exit_code) == int
+    assert type(exit_code) == int
 
     return exit_code
 
