@@ -32,7 +32,7 @@ def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwarg
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
 
-    treeherder_client = TreeherderClient(host=treeherder_server_url)
+    treeherder_client = TreeherderClient(server_url=treeherder_server_url)
 
     # Grabbing data received over pulse
     repo_name = data["project"]
