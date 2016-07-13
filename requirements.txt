@@ -1,7 +1,7 @@
 # Main dependencies
 mozci==0.43.0
 pulse_replay==0.2.2
-treeherder_submitter==0.3.1.dev2
+treeherder_submitter==0.4.1
 taskcluster_s3_uploader==0.3.1
 
 # Required by mozci
@@ -14,7 +14,7 @@ PyYAML==3.11
 redo==1.5
 requests==2.10.0
 taskcluster==0.3.4
-treeherder-client==2.1.0
+treeherder-client==3.0.0
 
 # Required by pulse_replay
 MozillaPulse==1.2.2
@@ -29,9 +29,11 @@ requests==2.10.0
 six==1.10.0
 slugid==1.0.7
 
-# Required by treeherder_submitter
+# Required by treeherder_submitter and subdependencies
 mozinfo==0.9
 mozfile==1.2
+treeherder-client==3.0.0
+requests-hawk==1.0.0
 
 # Required by taskcluster_s3_uploader
 boto3==1.3.1
