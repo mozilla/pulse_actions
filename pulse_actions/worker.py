@@ -234,6 +234,7 @@ def message_handler(data, message, *args, **kwargs):
 
 
 def start_request(repo_name, revision):
+    LOG.info('#### New request ####.')
     results = {
         # Set the level to INFO to ensure that no debug messages could leak anything
         # to the public
@@ -241,7 +242,6 @@ def start_request(repo_name, revision):
         'start_time': default_timer(),
         'treeherder_job': None
     }
-    LOG.info('#### New request ####.')
 
     # 1) Report as running to Treeherder
     if CONFIG['submit_to_treeherder']:
