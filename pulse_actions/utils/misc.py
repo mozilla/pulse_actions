@@ -6,7 +6,7 @@ import logging
 from mozci.mozci import valid_builder
 
 LOG = logging.getLogger(__name__)
-TREEHERDER = 'https://treeherder.mozilla.org/#/jobs?repo=%(repo)s&revision=%(revision)s'
+TREEHERDER = '%(treeherder_server_url)s/#/jobs?repo=%(repo)s&revision=%(revision)s'
 BUILDERNAME_REPLACEMENTS = [
     ('Rev5 MacOSX Yosemite 10.10', 'Rev7 MacOSX Yosemite 10.10.5'),
     ('TB Rev5 MacOSX Yosemite 10.10', 'TB Rev7 MacOSX Yosemite 10.10.5'),

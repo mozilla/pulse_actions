@@ -78,7 +78,7 @@ def ignored(data):
         return True
 
 
-def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
+def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwargs):
     """Act upon Treeherder job events.
 
     Return if the outcome was successful or not
@@ -93,7 +93,7 @@ def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
 
-    treeherder_client = TreeherderClient(host=treeherder_host)
+    treeherder_client = TreeherderClient(server_url=treeherder_server_url)
 
     action = data['action'].capitalize()
     job_id = data['job_id']
@@ -114,8 +114,8 @@ def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
     result_sets = treeherder_client.get_resultsets(repo_name, id=job_info["result_set_id"])
     revision = result_sets[0]["revision"]
 
-    link_to_job = 'https://{}/#/jobs?repo={}&revision={}&selectedJob={}'.format(
-        treeherder_host,
+    link_to_job = '{}/#/jobs?repo={}&revision={}&selectedJob={}'.format(
+        treeherder_server_url,
         repo_name,
         revision,
         job_id
