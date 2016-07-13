@@ -24,6 +24,7 @@ from mozci.query_jobs import TreeherderApi
 from mozci.utils import transfer
 from replay import create_consumer, replay_messages
 from thsubmitter import (
+    JobEndResult,
     TreeherderSubmitter,
     TreeherderJobFactory
 )
@@ -37,8 +38,8 @@ transfer.SHOW_PROGRESS_BAR = False
 JOB_SUCCESS = 0
 JOB_FAILURE = -1
 EXIT_CODE_JOB_RESULT_MAP = {
-    JOB_SUCCESS: 'success',
-    JOB_FAILURE: 'fail'
+    JOB_SUCCESS: JobEndResult.SUCCESS,
+    JOB_FAILURE: JobEndResult.FAIL
 }
 FILE_BUG = "https://bugzilla.mozilla.org/enter_bug.cgi?assigned_to=nobody%40mozilla.org&cc=armenzg%40mozilla.com&comment=Provide%20link.&component=General&form_name=enter_bug&product=Testing&short_desc=pulse_actions%20-%20Brief%20description%20of%20failure"  # flake8: noqa
 REQUIRED_ENV_VARIABLES = [
@@ -315,11 +316,7 @@ def end_request(exit_code, data, log_path, treeherder_job, start_time):
 
 
 def route(data, message, **kwargs):
-    ''' We need to map every exchange/topic to a specific handler.
-
-    We return if the request was processed successfully or not
-    '''
-    exit_code = JOB_FAILURE
+    ''' We need to map every exchange/topic to a specific handler.'''
     post_to_treeherder = True
 
     # XXX: This is not ideal; we should define in the config which exchange uses which handler
@@ -347,18 +344,12 @@ def route(data, message, **kwargs):
 
     if not post_to_treeherder:
         try:
-            exit_code = handler(data=data, message=message, **kwargs)
+            handler(data=data, message=message, **kwargs)
         except Exception as e:
             LOG.exception(e)
-            exit_code = JOB_FAILURE
-
-        # XXX: Until handlers can guarantee an exit_code
-        if exit_code is None:
-            exit_code = JOB_SUCCESS
 
     elif ignored(data):
         LOG.debug("We're not going to process this message")
-        exit_code = JOB_SUCCESS
 
     else:
         # 1) Log request
@@ -375,14 +366,11 @@ def route(data, message, **kwargs):
 
         # XXX: Until handlers can guarantee an exit_code
         if exit_code is None:
+            LOG.warning('The handler did not give us an exit_code')
             exit_code = JOB_SUCCESS
 
         # 3) Submit results to Treeherder
         end_request(exit_code=exit_code, data=data, **end_request_kwargs)
-
-    assert type(exit_code) == int
-
-    return exit_code
 
 
 def run_listener(config_file):

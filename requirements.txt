@@ -1,7 +1,7 @@
 # Main dependencies
 mozci==0.42.0
 pulse_replay==0.2.2
-treeherder_submitter==0.3.1.dev1
+treeherder_submitter==0.3.1.dev2
 taskcluster_s3_uploader==0.3.1
 
 # Required by mozci
