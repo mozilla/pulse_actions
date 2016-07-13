@@ -70,7 +70,7 @@ CONFIG = {
     },
     'route': True,
     'submit_to_treeherder': False,
-    'treeherder_host': 'treeherder.mozilla.org',
+    'treeherder_server_url': 'https://treeherder.mozilla.org',
 }
 
 
@@ -112,12 +112,12 @@ def main():
         transfer.MEMORY_SAVING_MODE = True
 
     # 4) Set the treeherder host
-    if options.config_file and options.treeherder_host:
-        # treeherder_host can be mistakenly set to two different values if we allow for this
-        raw_input('Press Ctrl + C if you did not intent to use --treeherder-host with --config-file')
+    if options.config_file and options.treeherder_server_url:
+        # treeherder_server_url can be mistakenly set to two different values if we allow for this
+        raw_input('Press Ctrl + C if you did not intent to use --treeherder-server-url with --config-file')
 
-    if options.treeherder_host:
-        CONFIG['treeherder_host'] = options.treeherder_host
+    if options.treeherder_server_url:
+        CONFIG['treeherder_server_url'] = options.treeherder_server_url
 
     elif options.config_file:
         with open(options.config_file, 'r') as file:
@@ -128,10 +128,10 @@ def main():
                 # Inside of some of our handlers we set the Treeherder client
                 # We would not want to try to test with a stage config yet
                 # we query production instead of stage
-                CONFIG['treeherder_host'] = pulse_actions_config['treeherder_host']
+                CONFIG['treeherder_server_url'] = pulse_actions_config['treeherder_server_url']
 
     else:
-        LOG.error("Set --treeherder-host if you're not using a config file")
+        LOG.error("Set --treeherder-url if you're not using a config file")
         sys.exit(1)
 
     # 5) Set few constants which are used by message_handler
@@ -155,12 +155,10 @@ def main():
     # 6) Set up the treeherder submitter
     if CONFIG['submit_to_treeherder']:
         JOB_FACTORY = initialize_treeherder_submission(
-            host=CONFIG['treeherder_host'],
-            protocol='http' if CONFIG['treeherder_host'].startswith('local') else 'https',
+            server_url=CONFIG['treeherder_server_url'],
             client=os.environ['TREEHERDER_CLIENT_ID'],
             secret=os.environ['TREEHERDER_SECRET'],
-            # XXX: Temporarily
-            dry_run=False,
+            dry_run=CONFIG['acknowledge'],
         )
 
     # 7) XXX: Disable mozci's validations (this might not be needed anymore)
@@ -178,11 +176,10 @@ def main():
         run_listener(config_file=options.config_file)
 
 
-def initialize_treeherder_submission(host, protocol, client, secret, dry_run):
+def initialize_treeherder_submission(server_url, client, secret, dry_run):
     # 1) Object to submit jobs
     th = TreeherderSubmitter(
-        host=host,
-        protocol=protocol,
+        server_url=server_url,
         treeherder_client_id=client,
         treeherder_secret=secret,
         dry_run=dry_run,
@@ -190,9 +187,9 @@ def initialize_treeherder_submission(host, protocol, client, secret, dry_run):
     return TreeherderJobFactory(submitter=th)
 
 
-def _determine_repo_revision(data, treeherder_host):
+def _determine_repo_revision(data, treeherder_server_url):
     ''' Return repo_name and revision based on Pulse message data.'''
-    query = TreeherderApi(treeherder_host)
+    query = TreeherderApi(server_url=treeherder_server_url)
 
     if 'project' in data:
         repo_name = data['project']
@@ -228,7 +225,7 @@ def message_handler(data, message, *args, **kwargs):
     if CONFIG['route']:
         try:
             route(data=data, message=message, dry_run=CONFIG['dry_run'],
-                  treeherder_host=CONFIG['treeherder_host'],
+                  treeherder_server_url=CONFIG['treeherder_server_url'],
                   acknowledge=CONFIG['acknowledge'])
         except Exception as e:
             LOG.exception(e)
@@ -353,7 +350,7 @@ def route(data, message, **kwargs):
 
     else:
         # 1) Log request
-        repo_name, revision = _determine_repo_revision(data, CONFIG['treeherder_host'])
+        repo_name, revision = _determine_repo_revision(data, CONFIG['treeherder_server_url'])
         end_request_kwargs = start_request(repo_name=repo_name, revision=revision)
 
         # 2) Process request
@@ -427,8 +424,8 @@ def parse_args(argv=None):
     parser.add_argument('--submit-to-treeherder', action="store_true", dest="submit_to_treeherder",
                         help="Submit to treeherder even if running on dry run mode.")
 
-    parser.add_argument('--treeherder-host', dest="treeherder_host", type=str,
-                        help='You can specify a treeherder host to use instead of reading the '
+    parser.add_argument('--treeherder-server-url', dest="treeherder_server_url", type=str,
+                        help='You can specify a treeherder server url to use instead of reading the '
                              'value from a config file.')
 
     options = parser.parse_args(argv)
