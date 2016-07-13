@@ -158,7 +158,7 @@ def main():
             server_url=CONFIG['treeherder_server_url'],
             client=os.environ['TREEHERDER_CLIENT_ID'],
             secret=os.environ['TREEHERDER_SECRET'],
-            dry_run=CONFIG['acknowledge'],
+            dry_run=CONFIG['dry_run'],
         )
 
     # 7) XXX: Disable mozci's validations (this might not be needed anymore)
