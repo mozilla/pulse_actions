@@ -78,22 +78,24 @@ def ignored(data):
         return True
 
 
-def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
+def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwargs):
     """Act upon Treeherder job events.
 
     Return if the outcome was successful or not
     """
+    exit_code = 0  # SUCCESS
+
     if ignored(data):
         if acknowledge:
             # We need to ack the message to remove it from our queue
             message.ack()
-        return 0  # SUCCESS
+        return exit_code
 
     # Cleaning mozci caches
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
 
-    treeherder_client = TreeherderClient(host=treeherder_host)
+    treeherder_client = TreeherderClient(server_url=treeherder_server_url)
 
     action = data['action'].capitalize()
     job_id = data['job_id']
@@ -106,7 +108,7 @@ def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
     except IndexError:
         LOG.info("We could not find any job_info for repo_name: %s and "
                  "job_id: %s" % (repo_name, job_id))
-        return False
+        return exit_code
 
     buildername = job_info["ref_data_name"]
 
@@ -114,8 +116,8 @@ def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
     result_sets = treeherder_client.get_resultsets(repo_name, id=job_info["result_set_id"])
     revision = result_sets[0]["revision"]
 
-    link_to_job = 'https://{}/#/jobs?repo={}&revision={}&selectedJob={}'.format(
-        treeherder_host,
+    link_to_job = '{}/#/jobs?repo={}&revision={}&selectedJob={}'.format(
+        treeherder_server_url,
         repo_name,
         revision,
         job_id
@@ -133,29 +135,31 @@ def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
     if buildername is None:
         LOG.info('Treeherder can send us invalid builder names.')
         LOG.info('See https://bugzilla.mozilla.org/show_bug.cgi?id=1242038.')
-        LOG.warning('Builder %s is invalid.' % buildername)
-        return -1  # FAILURE
+        LOG.warning('Requested job name "%s" is invalid.' % job_info['ref_data_name'])
+        exit_code = -1  # FAILURE
 
+    # There are various actions that can be taken on a job, however, we currently
+    # only process the backfill one
     elif action == "Backfill":
-        # There are various actions that can be taken on a job, however, we currently
-        # only process the backfill one
-            manual_backfill(
-                revision=revision,
-                buildername=buildername,
-                dry_run=dry_run,
-            )
-            if not dry_run:
-                status = 'Backfill request sent'
-            else:
-                status = 'Dry-run mode, nothing was backfilled.'
-            LOG.debug(status)
+        exit_code = manual_backfill(
+            revision=revision,
+            buildername=buildername,
+            dry_run=dry_run,
+        )
+        if not dry_run:
+            status = 'Backfill request sent'
+        else:
+            status = 'Dry-run mode, nothing was backfilled.'
+        LOG.debug(status)
 
     else:
         LOG.error(
             'We were not aware of the "{}" action. Please file an issue'.format(action)
         )
-        return -1  # FAILURE
+        exit_code = -1  # FAILURE
 
     if acknowledge:
         # We need to ack the message to remove it from our queue
         message.ack()
+
+    return exit_code

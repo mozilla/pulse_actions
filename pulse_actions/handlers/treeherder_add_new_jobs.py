@@ -21,7 +21,7 @@ def ignored(data):
     return False
 
 
-def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
+def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwargs):
     if ignored(data):
         if acknowledge:
             # We need to ack the message to remove it from our queue
@@ -32,7 +32,7 @@ def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
     buildjson.BUILDS_CACHE = {}
     query_jobs.JOBS_CACHE = {}
 
-    treeherder_client = TreeherderClient(host=treeherder_host)
+    treeherder_client = TreeherderClient(server_url=treeherder_server_url)
 
     # Grabbing data received over pulse
     repo_name = data["project"]
@@ -54,7 +54,7 @@ def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
     author = resultset["author"]
 
     treeherder_link = TREEHERDER % {
-        'host': treeherder_host,
+        'treeherder_server_url': treeherder_server_url,
         'repo': repo_name,
         'revision': resultset['revision']
     }

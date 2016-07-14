@@ -18,7 +18,7 @@ def ignored(data):
         return False
 
 
-def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
+def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwargs):
     if ignored(data):
         if acknowledge:
             message.ack()
@@ -33,7 +33,7 @@ def on_event(data, message, dry_run, treeherder_host, acknowledge, **kwargs):
     # Pulse gives us resultset_id, we need to get revision from it.
     resultset_id = data["resultset_id"]
 
-    treeherder_client = TreeherderClient(host=treeherder_host)
+    treeherder_client = TreeherderClient(server_url=treeherder_server_url)
 
     LOG.info("%s action requested by %s on repo_name %s with resultset_id: %s" % (
         data['action'],

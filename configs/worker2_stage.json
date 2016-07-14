@@ -15,6 +15,6 @@
         }
     },
     "pulse_actions": {
-        "treeherder_host": "treeherder.allizom.org"
+        "treeherder_server_url": "https://treeherder.allizom.org"
     }
 }
