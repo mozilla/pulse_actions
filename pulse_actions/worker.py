@@ -346,7 +346,8 @@ def route(data, message, **kwargs):
             LOG.exception(e)
 
     elif ignored(data):
-        LOG.debug("We're not going to process this message")
+        LOG.info("We're not going to process this message")
+        LOG.info('Message {}'.format(str(data)))
 
     else:
         # 1) Log request
