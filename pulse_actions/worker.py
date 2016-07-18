@@ -315,6 +315,7 @@ def end_request(exit_code, data, log_path, treeherder_job, start_time):
 def route(data, message, **kwargs):
     ''' We need to map every exchange/topic to a specific handler.'''
     post_to_treeherder = True
+    acknowledge = kwargs.get('acknowledge', False)
 
     # XXX: This is not ideal; we should define in the config which exchange uses which handler
     # XXX: Specify here which treeherder host
@@ -348,6 +349,8 @@ def route(data, message, **kwargs):
     elif ignored(data):
         LOG.info("We're not going to process this message")
         LOG.info('Message {}'.format(str(data)))
+        if acknowledge:
+            message.ack()
 
     else:
         # 1) Log request
