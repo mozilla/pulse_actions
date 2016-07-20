@@ -85,7 +85,7 @@ def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwarg
         if repo_name != 'try':
             LOG.warning("We don't allow scheduling TaskCluster jobs for non Try repos until "
                         "bug 1286894 is resolved")
-            exit_code = -1
+            return -1
         else:
             try:
                 mgr = TaskClusterManager(dry_run=dry_run)
