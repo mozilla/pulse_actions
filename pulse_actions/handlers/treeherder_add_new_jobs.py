@@ -9,7 +9,7 @@ from pulse_actions.utils.misc import (
 from mozci import TaskClusterBuildbotManager, query_jobs
 from mozci.mozci import trigger_job
 from mozci.sources import buildjson, buildbot_bridge
-from mozci.taskcluster import TaskClusterManager
+from mozci.taskcluster import TaskClusterManager, is_taskcluster_label
 from thclient import TreeherderClient
 
 LOG = logging.getLogger(__name__.split('.')[-1])
@@ -72,7 +72,7 @@ def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwarg
         LOG.info("- %s" % b)
 
     # Handle TC tasks separately
-    task_labels = [x for x in requested_jobs if x.startswith('TaskLabel==')]
+    task_labels = [x for x in requested_jobs if is_taskcluster_label(x, decision_task_id)]
     buildernames = list(set(requested_jobs) - set(task_labels))
 
     buildernames = filter_invalid_builders(buildernames)
