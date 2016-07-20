@@ -72,7 +72,10 @@ def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwarg
         LOG.info("- %s" % b)
 
     # Handle TC tasks separately
-    task_labels = [x for x in requested_jobs if is_taskcluster_label(x, decision_task_id)]
+    if decision_task_id:
+        task_labels = [x for x in requested_jobs if is_taskcluster_label(x, decision_task_id)]
+    else:
+        task_labels = []
     buildernames = list(set(requested_jobs) - set(task_labels))
 
     buildernames = filter_invalid_builders(buildernames)
