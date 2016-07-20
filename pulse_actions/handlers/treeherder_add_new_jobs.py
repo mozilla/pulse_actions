@@ -80,13 +80,20 @@ def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwarg
     # Scheduling TaskCluster jobs
     # Make sure that decision task id is not null and task_labels are there to schedule
     if task_labels and len(decision_task_id):
-        try:
-            mgr = TaskClusterManager(dry_run=dry_run)
-            mgr.schedule_action_task(decision_task_id=decision_task_id,
-                                     task_labels=task_labels)
-        except Exception, e:
-            LOG.warning(str(e))
-            raise
+        # We want to prevent API requests to schedule non-Try jobs until we've done
+        # a proper security review
+        if repo_name != 'try':
+            LOG.warning("We don't allow scheduling TaskCluster jobs for non Try repos until "
+                        "bug 1286894 is resolved")
+            exit_code = -1
+        else:
+            try:
+                mgr = TaskClusterManager(dry_run=dry_run)
+                mgr.schedule_action_task(decision_task_id=decision_task_id,
+                                         task_labels=task_labels)
+            except Exception, e:
+                LOG.warning(str(e))
+                raise
 
     # Treeherder can send us invalid builder names
     # https://bugzilla.mozilla.org/show_bug.cgi?id=1242038
