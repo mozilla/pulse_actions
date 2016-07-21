@@ -12,6 +12,10 @@
         "runnable": {
             "exchange": "exchange/treeherder-stage/v1/resultset-runnable-job-actions",
             "topic": "#"
+        },
+        "talos-jobs": {
+            "exchange": "exchange/build/normalized",
+            "topic": "build.#.#"
         }
     },
     "pulse_actions": {
