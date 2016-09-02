@@ -46,8 +46,12 @@ def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwarg
         LOG.error("Appropriate job requests not found in the pulse message.")
         return -1
 
-    # These are there as blank strings in non-try pulse messages
-    decision_task_id = data["decisionTaskID"]
+    # This is empty strings in non-try pulse messages
+    # Remove support for `decisionTaskID` once bug 1286897 fixed.
+    decision_task_id = data.get('decision_task_id', data.get('decisionTaskID'))
+    if not decision_task_id:
+        LOG.error('The pulse message did not contain the decision task ID.')
+        return -1
 
     resultset = treeherder_client.get_resultsets(repo_name, id=resultset_id)[0]
     revision = resultset["revision"]
