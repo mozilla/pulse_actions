@@ -83,7 +83,7 @@ def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwarg
     buildernames = filter_invalid_builders(list(set(requested_jobs) - set(task_labels)))
 
     # XXX: In the future handle return codes
-    add_taskcluster_jobs(task_labels, decision_task_id, repo_name)
+    add_taskcluster_jobs(task_labels, decision_task_id, repo_name, dry_run)
     add_buildbot_jobs(repo_name, revision, buildernames, metadata, dry_run)
 
     if acknowledge:
