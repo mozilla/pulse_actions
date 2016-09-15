@@ -1,5 +1,5 @@
 # Main dependencies
-mozci==0.44.3
+mozci
 pulse_replay==0.2.2
 treeherder_submitter==0.4.1
 taskcluster_s3_uploader==0.3.1
