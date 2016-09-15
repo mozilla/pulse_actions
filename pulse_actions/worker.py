@@ -223,7 +223,6 @@ def message_handler(data, message, *args, **kwargs):
     * Report the request to Treeherder first as running and then as complete
     '''
     if CONFIG['route']:
-        LOG.info('#### New request ####.')
         try:
             route(data=data, message=message, dry_run=CONFIG['dry_run'],
                   treeherder_server_url=CONFIG['treeherder_server_url'],
@@ -231,8 +230,6 @@ def message_handler(data, message, *args, **kwargs):
         except:
             LOG.exception('Failed to fulfill request. We should requeue it')
             message.requeue()
-
-        LOG.info('#### End of request ####.')
     else:
         LOG.info("We're not routing messages")
 
@@ -341,19 +338,21 @@ def route(data, message, **kwargs):
     else:
         LOG.error("Exchange not supported by router (%s)." % data)
 
-    if not post_to_treeherder:
-        try:
-            handler(data=data, message=message, **kwargs)
-        except:
-            LOG.exception(e)
 
-    elif ignored(data):
+    if ignored(data):
         LOG.info("We're not going to process this message")
         LOG.info('Message {}'.format(str(data)))
         if acknowledge:
             message.ack()
 
+    if not post_to_treeherder:
+        try:
+            handler(data=data, message=message, **kwargs)
+        except:
+            LOG.exception('Failed automatic action.')
+
     else:
+        LOG.info('#### New user request ####.')
         # 1) Log request
         repo_name, revision = _determine_repo_revision(data, CONFIG['treeherder_server_url'])
         end_request_kwargs = start_request(repo_name=repo_name, revision=revision)
@@ -373,6 +372,7 @@ def route(data, message, **kwargs):
 
         # 3) Submit results to Treeherder
         end_request(exit_code=exit_code, data=data, **end_request_kwargs)
+        LOG.info('#### End of user request ####.')
 
 
 def run_listener(config_file):
