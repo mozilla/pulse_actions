@@ -229,7 +229,6 @@ def message_handler(data, message, *args, **kwargs):
                   acknowledge=CONFIG['acknowledge'])
         except:
             LOG.exception('Failed to fulfill request. We should requeue it')
-            message.requeue()
     else:
         LOG.info("We're not routing messages")
 
