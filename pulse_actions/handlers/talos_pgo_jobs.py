@@ -64,24 +64,17 @@ def on_event(data, message, dry_run, acknowledge, **kwargs):
             message.ack()
         return -1  # FAILURE
 
-    try:
+    status = trigger_talos_jobs_for_build(
+        buildername=buildername,
+        revision=revision,
+        times=2,
+        priority=0,
+        dry_run=dry_run
+    )
 
-        trigger_talos_jobs_for_build(
-            buildername=buildername,
-            revision=revision,
-            times=2,
-            priority=0,
-            dry_run=dry_run
-        )
+    if acknowledge:
+        # We need to ack the message to remove it from our queue
+        message.ack()
 
-        if acknowledge:
-            # We need to ack the message to remove it from our queue
-            message.ack()
-
-        LOG.info('We triggered talos jobs for the build.')
-        return 0  # SUCCESS
-
-    except Exception, e:
-        LOG.warning("The message has not been acknowledged so we can retry it.")
-        LOG.warning(str(e))
-        raise
+    LOG.info('We triggered talos jobs for the build.')
+    return status

@@ -223,18 +223,21 @@ def message_handler(data, message, *args, **kwargs):
     * Report the request to Treeherder first as running and then as complete
     '''
     if CONFIG['route']:
+        LOG.info('#### New request ####.')
         try:
             route(data=data, message=message, dry_run=CONFIG['dry_run'],
                   treeherder_server_url=CONFIG['treeherder_server_url'],
                   acknowledge=CONFIG['acknowledge'])
-        except Exception as e:
-            LOG.exception(e)
+        except:
+            LOG.exception('Failed to fulfill request. We should requeue it')
+            message.requeue()
+
+        LOG.info('#### End of request ####.')
     else:
         LOG.info("We're not routing messages")
 
 
 def start_request(repo_name, revision):
-    LOG.info('#### New request ####.')
     results = {
         # Set the level to INFO to ensure that no debug messages could leak anything
         # to the public
@@ -255,9 +258,8 @@ def start_request(repo_name, revision):
         try:
             JOB_FACTORY.submit_running(treeherder_job)
             results['treeherder_job'] = treeherder_job
-        except Exception as e:
-            LOG.error(str(e))
-            LOG.warning("We will skip scheduling a {}".format(TH_SCH_JOB))
+        except:
+            LOG.exception("We will skip scheduling a {}".format(TH_SCH_JOB))
             # Even though the default value is None by being explicit we won't regress by mistake
             results['treeherder_job'] = None
 
@@ -308,7 +310,6 @@ def end_request(exit_code, data, log_path, treeherder_job, start_time):
             )
             LOG.info("Created {}.".format(TH_SCH_JOB))
 
-    LOG.info('#### End of request ####.')
     end_logging(log_path)
 
 
@@ -343,7 +344,7 @@ def route(data, message, **kwargs):
     if not post_to_treeherder:
         try:
             handler(data=data, message=message, **kwargs)
-        except Exception as e:
+        except:
             LOG.exception(e)
 
     elif ignored(data):
@@ -361,8 +362,8 @@ def route(data, message, **kwargs):
         try:
             exit_code = handler(data=data, message=message, repo_name=repo_name,
                                 revision=revision, **kwargs)
-        except Exception as e:
-            LOG.exception(e)
+        except:
+            LOG.exception('The handler failed to do is job. We will mark the job as failed')
             exit_code = JOB_FAILURE
 
         # XXX: Until handlers can guarantee an exit_code
