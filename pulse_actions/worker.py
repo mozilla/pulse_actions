@@ -19,6 +19,7 @@ from pulse_actions.utils.log_util import (
 )
 
 # Third party modules
+from kombu.exceptions import MessageStateError
 from mozci.mozci import disable_validations
 from mozci.query_jobs import TreeherderApi
 from mozci.utils import transfer
@@ -347,6 +348,9 @@ def route(data, message, **kwargs):
     if not post_to_treeherder:
         try:
             handler(data=data, message=message, **kwargs)
+        except MessageStateError as e:
+            # I'm trying to fix the improper use of requeue in a previous patch
+            LOG.warning(str(e))
         except:
             LOG.exception('Failed automatic action.')
 
