@@ -229,7 +229,7 @@ def message_handler(data, message, *args, **kwargs):
                   treeherder_server_url=CONFIG['treeherder_server_url'],
                   acknowledge=CONFIG['acknowledge'])
         except:
-            LOG.exception('Failed to fulfill request. We should requeue it')
+            LOG.exception('Failed to fulfill request.')
     else:
         LOG.info("We're not routing messages")
 
@@ -364,6 +364,9 @@ def route(data, message, **kwargs):
         try:
             exit_code = handler(data=data, message=message, repo_name=repo_name,
                                 revision=revision, **kwargs)
+        except MessageStateError as e:
+            # I'm trying to fix the improper use of requeue in a previous patch
+            LOG.warning(str(e))
         except:
             LOG.exception('The handler failed to do is job. We will mark the job as failed')
             exit_code = JOB_FAILURE
