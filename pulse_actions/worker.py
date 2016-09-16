@@ -367,12 +367,13 @@ def route(data, message, **kwargs):
         except MessageStateError as e:
             # I'm trying to fix the improper use of requeue in a previous patch
             LOG.warning(str(e))
+            exit_code = JOB_FAILURE
         except:
             LOG.exception('The handler failed to do is job. We will mark the job as failed')
             exit_code = JOB_FAILURE
 
         # XXX: Until handlers can guarantee an exit_code
-        if exit_code is None:
+        if not exit_code:
             LOG.warning('The handler did not give us an exit_code')
             exit_code = JOB_SUCCESS
 
