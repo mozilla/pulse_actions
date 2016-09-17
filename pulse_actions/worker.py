@@ -344,8 +344,7 @@ def route(data, message, **kwargs):
         LOG.info('Message {}'.format(str(data)))
         if acknowledge:
             message.ack()
-
-    if not post_to_treeherder:
+    elif not post_to_treeherder:
         try:
             handler(data=data, message=message, **kwargs)
         except MessageStateError as e:
