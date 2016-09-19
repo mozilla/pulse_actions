@@ -97,16 +97,17 @@ def main():
                 # Do not print the value as it could be a secret
                 LOG.info('Set {}'.format(env))
 
-    fail_check = False
-    for env in REQUIRED_ENV_VARIABLES:
-        if env not in os.environ:
-            LOG.info('- {}'.format(env))
-            fail_check = True
+    if not options.dry_run:
+        fail_check = False
+        for env in REQUIRED_ENV_VARIABLES:
+            if env not in os.environ:
+                LOG.info('- {}'.format(env))
+                fail_check = True
 
-    if fail_check:
-        if not options.dry_run:
-            LOG.error('Please set all the missing environment variables above.')
-            sys.exit(1)
+        if fail_check:
+            if not options.dry_run:
+                LOG.error('Please set all the missing environment variables above.')
+                sys.exit(1)
 
     # 3) Enable memory saving (useful for Heroku)
     if options.memory_saving:
@@ -130,6 +131,9 @@ def main():
                 # We would not want to try to test with a stage config yet
                 # we query production instead of stage
                 CONFIG['treeherder_server_url'] = pulse_actions_config['treeherder_server_url']
+
+    elif options.dry_run:
+        pass
 
     else:
         LOG.error("Set --treeherder-url if you're not using a config file")
@@ -218,10 +222,6 @@ def _determine_repo_revision(data, treeherder_server_url):
 # to the function, we need to pass dry-run to route
 def message_handler(data, message, *args, **kwargs):
     ''' Handle pulse message, log to file, upload and report to Treeherder
-
-    * Each request is logged into a unique file
-    * Upload each log file to S3
-    * Report the request to Treeherder first as running and then as complete
     '''
     if CONFIG['route']:
         try:
@@ -340,13 +340,15 @@ def route(data, message, **kwargs):
 
 
     if ignored(data):
-        LOG.info("We're not going to process this message")
-        LOG.info('Message {}'.format(str(data)))
+        LOG.info('Message {}'.format(str(data)[:120]))
         if acknowledge:
             message.ack()
     elif not post_to_treeherder:
         try:
+            LOG.info('#### New automatic request ####.')
             handler(data=data, message=message, **kwargs)
+            LOG.info('Message {}'.format(str(data)))
+            LOG.info('#### End of automatic request ####.')
         except MessageStateError as e:
             # I'm trying to fix the improper use of requeue in a previous patch
             LOG.warning(str(e))
@@ -354,6 +356,9 @@ def route(data, message, **kwargs):
             LOG.exception('Failed automatic action.')
 
     else:
+        # * Each request is logged into a unique file
+        # * Upload each log file to S3
+        # * Report the request to Treeherder first as running and then as complete
         LOG.info('#### New user request ####.')
         # 1) Log request
         repo_name, revision = _determine_repo_revision(data, CONFIG['treeherder_server_url'])
