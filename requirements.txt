@@ -1,5 +1,5 @@
 # Main dependencies
-git+https://github.com/armenzg/mozilla_ci_tools.git@experimental_branch#egg=mozci
+mozci==0.45.1
 pulse_replay==0.2.2
 treeherder_submitter==0.4.1
 taskcluster_s3_uploader==0.3.1
@@ -32,7 +32,7 @@ slugid==1.0.7
 # Required by treeherder_submitter and subdependencies
 mozinfo==0.9
 mozfile==1.2
-treeherder-client==3.0.0
+# treeherder-client
 requests-hawk==1.0.0
 
 # Required by taskcluster_s3_uploader
