@@ -14,7 +14,7 @@ PyYAML==3.11
 redo==1.5
 requests==2.10.0
 taskcluster==0.3.4
-treeherder-client==3.0.0
+treeherder-client==3.1.0
 
 # Required by pulse_replay
 MozillaPulse==1.2.2
