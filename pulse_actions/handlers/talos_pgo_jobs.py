@@ -68,7 +68,6 @@ def on_event(data, message, dry_run, acknowledge, **kwargs):
         buildername=buildername,
         revision=revision,
         times=2,
-        priority=0,
         dry_run=dry_run
     )
 
