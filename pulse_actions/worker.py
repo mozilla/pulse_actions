@@ -97,7 +97,10 @@ def main():
                 # Do not print the value as it could be a secret
                 LOG.info('Set {}'.format(env))
 
-    if not options.dry_run:
+    dry_run = options.dry_run or CONFIG['dry_run']
+    CONFIG['dry_run'] = dry_run
+
+    if not dry_run:
         fail_check = False
         for env in REQUIRED_ENV_VARIABLES:
             if env not in os.environ:
@@ -105,9 +108,8 @@ def main():
                 fail_check = True
 
         if fail_check:
-            if not options.dry_run:
-                LOG.error('Please set all the missing environment variables above.')
-                sys.exit(1)
+            LOG.error('Please set all the missing environment variables above.')
+            sys.exit(1)
 
     # 3) Enable memory saving (useful for Heroku)
     if options.memory_saving:
@@ -132,7 +134,7 @@ def main():
                 # we query production instead of stage
                 CONFIG['treeherder_server_url'] = pulse_actions_config['treeherder_server_url']
 
-    elif options.dry_run:
+    elif dry_run:
         pass
 
     else:
@@ -140,19 +142,17 @@ def main():
         sys.exit(1)
 
     # 5) Set few constants which are used by message_handler
-    CONFIG['dry_run'] = options.dry_run or options.replay_file is not None
-
-    if options.submit_to_treeherder:
-        CONFIG['submit_to_treeherder'] = True
-    elif options.dry_run:
+    if dry_run:
         CONFIG['submit_to_treeherder'] = False
-    elif os.environ.get('SUBMIT_TO_TREEHERDER'):
+    else:
+        CONFIG['dry_run'] = options.dry_run or options.replay_file is not None
+        CONFIG['acknowledge'] = False
+
+    if options.submit_to_treeherder or os.environ.get('SUBMIT_TO_TREEHERDER'):
         CONFIG['submit_to_treeherder'] = True
 
     if options.acknowledge:
         CONFIG['acknowledge'] = True
-    elif options.dry_run:
-        CONFIG['acknowledge'] = False
 
     if options.do_not_route:
         CONFIG['route'] = False
@@ -163,7 +163,7 @@ def main():
             server_url=CONFIG['treeherder_server_url'],
             client=os.environ['TREEHERDER_CLIENT_ID'],
             secret=os.environ['TREEHERDER_SECRET'],
-            dry_run=CONFIG['dry_run'],
+            dry_run=dry_run
         )
 
     # 7) XXX: Disable mozci's validations (this might not be needed anymore)
