@@ -59,7 +59,7 @@ TH_SCH_JOB = "Treeherder 'Sch' job"  # This guarantees using a proper filter for
 # These values are used inside of message_handler
 CONFIG = {
     'acknowledge': True,
-    'dry_run': False,
+    'dry_run': 'DRY_RUN' in os.environ,
     'pulse_actions_job_template': {
         'desc': 'This job was scheduled by pulse_actions.',
         'job_name': 'pulse_actions',
