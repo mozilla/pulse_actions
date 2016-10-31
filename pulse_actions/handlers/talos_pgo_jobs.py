@@ -20,6 +20,8 @@ LOG = logging.getLogger(__name__.split('.')[-1])
 
 def ignored(data):
     '''It determines if the request will be processed or not.'''
+    return True
+
     try:
         info = get_buildername_metadata(data['payload']['buildername'])
         if info['build_type'] == "pgo" and \
