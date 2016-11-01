@@ -1,5 +1,5 @@
 {
-    "applabel": "pulse_actions",
+    "applabel": "pulse_actions_automatic_events",
     "durable": "true",
     "sources": {
         "talos-jobs": {

@@ -1,5 +1,5 @@
 {
-    "applabel": "pulse_actions",
+    "applabel": "pulse_actions_manual_requests",
     "durable": "true",
     "sources": {
         "resultset_actions": {
