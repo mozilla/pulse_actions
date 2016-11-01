@@ -266,10 +266,8 @@ def start_request(repo_name, revision):
 def end_request(exit_code, data, log_path, treeherder_job, start_time):
     '''End logging, upload to S3 and submit to Treeherder'''
     # 1) Let's stop the logging
-    LOG.info('Seconds to execute: {} - Message {}'.format(
-        str(int(int(default_timer() - start_time))),
-        str(data),
-    ))
+    LOG.info('Seconds to execute: {}'.format(str(int(default_timer() - start_time))))
+    LOG.info('- Message {}'.format(str(data)))
 
     if CONFIG['submit_to_treeherder']:
         if treeherder_job is None:
