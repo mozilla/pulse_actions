@@ -19,6 +19,7 @@ from pulse_actions.utils.log_util import (
 )
 
 # Third party modules
+import newrelic.agent
 from kombu.exceptions import MessageStateError
 from mozci.mozci import disable_validations
 from mozci.query_jobs import TreeherderApi
@@ -75,6 +76,7 @@ CONFIG = {
 }
 
 
+@newrelic.agent.background_task()
 def main():
     global CONFIG, LOG, JOB_FACTORY
 
