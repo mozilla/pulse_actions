@@ -1,12 +1,12 @@
 # Main dependencies
-mozci==0.49.0
+mozci==0.50.0
 pulse_replay==0.2.2
 treeherder_submitter==0.4.1
 taskcluster_s3_uploader==0.3.1
 newrelic==2.72.1.53
 
 # Required by mozci
-buildapi-client==0.6.0
+buildapi-client==0.6.1
 ijson==2.2
 keyring==6.0
 progressbar==2.3
