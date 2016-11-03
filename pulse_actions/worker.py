@@ -231,6 +231,9 @@ def message_handler(data, message, *args, **kwargs):
             route(data=data, message=message, dry_run=CONFIG['dry_run'],
                   treeherder_server_url=CONFIG['treeherder_server_url'],
                   acknowledge=CONFIG['acknowledge'])
+        except KeyboardInterrupt:
+            # We want to get out of run_listener()
+            raise
         except:
             LOG.exception('Failed to fulfill request.')
     else:
@@ -258,6 +261,8 @@ def start_request(repo_name, revision):
         try:
             JOB_FACTORY.submit_running(treeherder_job)
             results['treeherder_job'] = treeherder_job
+        except KeyboardInterrupt:
+            raise
         except:
             LOG.exception("We will skip scheduling a {}".format(TH_SCH_JOB))
             # Even though the default value is None by being explicit we won't regress by mistake
@@ -355,6 +360,8 @@ def route(data, message, **kwargs):
         except MessageStateError as e:
             # I'm trying to fix the improper use of requeue in a previous patch
             LOG.warning(str(e))
+        except KeyboardInterrupt:
+            raise
         except:
             LOG.exception('Failed automatic action.')
 
@@ -375,6 +382,8 @@ def route(data, message, **kwargs):
             # I'm trying to fix the improper use of requeue in a previous patch
             LOG.warning(str(e))
             exit_code = JOB_FAILURE
+        except KeyboardInterrupt:
+            raise
         except:
             LOG.exception('The handler failed to do is job. We will mark the job as failed')
             exit_code = JOB_FAILURE
@@ -408,9 +417,11 @@ def run_listener(config_file):
         try:
             consumer.listen()
         except KeyboardInterrupt:
-            sys.exit(1)
+            LOG.error('The user requested keyboard interruption')
+            # We want to get out of the loop
+            break
         except:
-            traceback.print_exc()
+            LOG.exception('CRITICAL: We should have caught this error earlier.')
 
 
 def parse_args(argv=None):
