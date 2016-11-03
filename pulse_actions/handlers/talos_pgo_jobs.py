@@ -42,6 +42,7 @@ def on_event(data, message, dry_run, acknowledge, **kwargs):
     if ignored(data):
         if acknowledge:
             # We need to ack the message to remove it from our queue
+            LOG.info('Message acknowledged')
             message.ack()
         LOG.debug("'%s' with status %i. Nothing to be done.",
                   data['payload']['buildername'], data['payload']['status'])
@@ -61,6 +62,7 @@ def on_event(data, message, dry_run, acknowledge, **kwargs):
     if buildername is None:
         if acknowledge:
             # We need to ack the message to remove it from our queue
+            LOG.info('Message acknowledged')
             message.ack()
         return -1  # FAILURE
 
@@ -73,6 +75,7 @@ def on_event(data, message, dry_run, acknowledge, **kwargs):
 
     if acknowledge:
         # We need to ack the message to remove it from our queue
+        LOG.info('Message acknowledged')
         message.ack()
 
     LOG.info('We triggered talos jobs for the build.')

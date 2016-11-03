@@ -21,6 +21,7 @@ def ignored(data):
 def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwargs):
     if ignored(data):
         if acknowledge:
+            LOG.info('Message acknowledged')
             message.ack()
         return 0  # SUCCESS
 
@@ -74,6 +75,7 @@ def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwarg
 
     if acknowledge:
         # We need to ack the message to remove it from our queue
+        LOG.info('Message acknowledged')
         message.ack()
 
     return 0  # SUCCESS

@@ -54,6 +54,7 @@ REQUIRED_ENV_VARIABLES = [
     'PULSE_USER',  # To create Pulse queues and consume from them
     'PULSE_PW',
 ]
+
 # Global variables
 LOG = None
 TH_SCH_JOB = "Treeherder 'Sch' job"  # This guarantees using a proper filter for Papertrail
@@ -343,6 +344,7 @@ def route(data, message, **kwargs):
     if ignored(data):
         LOG.info('Message {}'.format(str(data)[:120]))
         if acknowledge:
+            LOG.info('Message acknowledged')
             message.ack()
     elif not post_to_treeherder:
         try:
