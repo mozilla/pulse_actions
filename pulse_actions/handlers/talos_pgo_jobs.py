@@ -39,6 +39,8 @@ def on_event(data, message, dry_run, acknowledge, **kwargs):
     Whenever PGO builds are completed in mozilla-inbound or fx-team,
     we trigger the corresponding talos jobs twice.
     """
+    LOG.info('Acknowledge value: {}'.format(acknowledge))
+
     if ignored(data):
         if acknowledge:
             # We need to ack the message to remove it from our queue

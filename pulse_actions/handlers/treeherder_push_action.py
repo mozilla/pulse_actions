@@ -19,6 +19,8 @@ def ignored(data):
 
 
 def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwargs):
+    LOG.info('Acknowledge value: {}'.format(acknowledge))
+
     if ignored(data):
         if acknowledge:
             LOG.info('Message acknowledged')

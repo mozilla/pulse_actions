@@ -83,6 +83,8 @@ def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwarg
 
     Return if the outcome was successful or not
     """
+    LOG.info('Acknowledge value: {}'.format(acknowledge))
+
     exit_code = 0  # SUCCESS
 
     if ignored(data):
