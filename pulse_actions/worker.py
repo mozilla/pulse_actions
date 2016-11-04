@@ -100,10 +100,9 @@ def main():
                 # Do not print the value as it could be a secret
                 LOG.info('Set {}'.format(env))
 
-    dry_run = options.dry_run or CONFIG['dry_run']
-    CONFIG['dry_run'] = dry_run
+    CONFIG['dry_run'] = options.dry_run or options.replay_file is not None or CONFIG['dry_run']
 
-    if not dry_run:
+    if not CONFIG['dry_run']:
         fail_check = False
         for env in REQUIRED_ENV_VARIABLES:
             if env not in os.environ:
@@ -137,7 +136,7 @@ def main():
                 # we query production instead of stage
                 CONFIG['treeherder_server_url'] = pulse_actions_config['treeherder_server_url']
 
-    elif dry_run:
+    elif CONFIG['dry_run']:
         pass
 
     else:
@@ -145,10 +144,8 @@ def main():
         sys.exit(1)
 
     # 5) Set few constants which are used by message_handler
-    if dry_run:
+    if CONFIG['dry_run']:
         CONFIG['submit_to_treeherder'] = False
-    else:
-        CONFIG['dry_run'] = options.dry_run or options.replay_file is not None
         CONFIG['acknowledge'] = False
 
     if options.submit_to_treeherder or os.environ.get('SUBMIT_TO_TREEHERDER'):
@@ -166,7 +163,7 @@ def main():
             server_url=CONFIG['treeherder_server_url'],
             client=os.environ['TREEHERDER_CLIENT_ID'],
             secret=os.environ['TREEHERDER_SECRET'],
-            dry_run=dry_run
+            dry_run=CONFIG['dry_run']
         )
 
     # 7) XXX: Disable mozci's validations (this might not be needed anymore)
