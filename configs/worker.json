@@ -1,5 +1,5 @@
 {
-    "applabel": "pulse_actions_manual_requests",
+    "applabel": "pulse_actions",
     "durable": "true",
     "sources": {
         "resultset_actions": {
@@ -13,6 +13,10 @@
         "runnable": {
             "exchange": "exchange/treeherder/v1/resultset-runnable-job-actions",
             "topic": "#"
+        },
+        "talos-jobs": {
+            "exchange": "exchange/build/normalized",
+            "topic": "build.#.#"
         }
     },
     "pulse_actions": {
