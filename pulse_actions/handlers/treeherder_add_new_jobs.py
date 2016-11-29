@@ -118,7 +118,9 @@ def add_taskcluster_jobs(task_labels, decision_task_id, repo_name, dry_run):
             try:
                 mgr = TaskClusterManager(dry_run=dry_run)
                 mgr.schedule_action_task(decision_task_id=decision_task_id,
-                                         task_labels=task_labels)
+                                         task_labels=task_labels,
+                                         action_args={'decision_task_id': decision_task_id,
+                                                      'task_labels': task_labels})
             except Exception as e:
                 # XXX: Read the following article and determine if we need to improve this
                 # https://www.loggly.com/blog/exceptional-logging-of-exceptions-in-python
