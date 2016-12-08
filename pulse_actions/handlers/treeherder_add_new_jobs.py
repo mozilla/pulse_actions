@@ -118,7 +118,7 @@ def add_taskcluster_jobs(task_labels, decision_task_id, repo_name, dry_run):
             try:
                 mgr = TaskClusterManager(dry_run=dry_run)
                 mgr.schedule_action_task(decision_task_id=decision_task_id,
-                                         task_labels=task_labels,
+                                         action='action-task',
                                          action_args={'decision_task_id': decision_task_id,
                                                       'task_labels': task_labels})
             except Exception as e:
