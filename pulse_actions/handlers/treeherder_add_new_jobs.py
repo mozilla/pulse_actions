@@ -120,7 +120,7 @@ def add_taskcluster_jobs(task_labels, decision_task_id, repo_name, dry_run):
                 mgr.schedule_action_task(decision_id=decision_task_id,
                                          action='action-task',
                                          action_args={'decision_id': decision_task_id,
-                                                      'task_labels': task_labels})
+                                                      'task_labels': ','.join(task_labels)})
             except Exception as e:
                 # XXX: Read the following article and determine if we need to improve this
                 # https://www.loggly.com/blog/exceptional-logging-of-exceptions-in-python
