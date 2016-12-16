@@ -65,6 +65,7 @@ from pulse_actions.utils.misc import filter_invalid_builders
 from mozci import query_jobs
 from mozci.mozci import manual_backfill
 from mozci.sources import buildjson
+from mozci.taskcluster import TaskClusterManager
 from thclient import TreeherderClient
 
 LOG = logging.getLogger(__name__.split('.')[-1])
@@ -113,11 +114,9 @@ def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwarg
                  "job_id: %s" % (repo_name, job_id))
         return exit_code
 
-    buildername = job_info["ref_data_name"]
-
     # We want to know the revision associated for this job
-    result_sets = treeherder_client.get_resultsets(repo_name, id=job_info["result_set_id"])
-    revision = result_sets[0]["revision"]
+    result_set = treeherder_client.get_resultsets(repo_name, id=job_info["result_set_id"])[0]
+    revision = result_set["revision"]
 
     link_to_job = '{}/#/jobs?repo={}&revision={}&selectedJob={}'.format(
         treeherder_server_url,
@@ -126,34 +125,65 @@ def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwarg
         job_id
     )
 
-    LOG.info("{} action requested by {} for '{}'".format(
-        action,
-        data['requester'],
-        buildername,
-    ))
-    LOG.info('Request for {}'.format(link_to_job))
-
-    buildername = filter_invalid_builders(buildername)
-
-    if buildername is None:
-        LOG.info('Treeherder can send us invalid builder names.')
-        LOG.info('See https://bugzilla.mozilla.org/show_bug.cgi?id=1242038.')
-        LOG.warning('Requested job name "%s" is invalid.' % job_info['ref_data_name'])
-        exit_code = -1  # FAILURE
-
     # There are various actions that can be taken on a job, however, we currently
     # only process the backfill one
-    elif action == "Backfill":
-        exit_code = manual_backfill(
-            revision=revision,
-            buildername=buildername,
-            dry_run=dry_run,
-        )
-        if not dry_run:
-            status = 'Backfill request sent'
+    if action == "Backfill":
+        if job_info["build_system_type"] == "taskcluster":
+            jobs = []
+            jobs_per_call = 250
+            offset = 0
+            while True:
+                results = treeherder_client.get_jobs(
+                    repo_name,
+                    push_id=job_info["result_set_id"],
+                    count=jobs_per_call,
+                    offset=offset
+                )
+                jobs += results
+                if (len(results) < jobs_per_call):
+                    break
+                offset += jobs_per_call
+
+            decision = [t for t in jobs if t["job_type_name"] == "Gecko Decision Task"][0]
+            details = treeherder_client.get_job_details(job_guid=decision["job_guid"])
+            inspect = [detail["url"] for detail in details if detail["value"] == "Inspect Task"][0]
+            # Pull out the taskId from the URL e.g.
+            # oN1NErz_Rf2DZJ1hi7YVfA from <tc_tools_site>/task-inspector/#oN1NErz_Rf2DZJ1hi7YVfA/
+            decision_id = inspect.partition("#")[-1].rpartition("/")[0]
+            mgr = TaskClusterManager(dry_run=dry_run)
+            mgr.schedule_action_task(decision_id=decision_id,
+                                     action="backfill",
+                                     action_args={"project": repo_name,
+                                                  "job": job_info["id"]})
+
         else:
-            status = 'Dry-run mode, nothing was backfilled.'
-        LOG.debug(status)
+            buildername = job_info["ref_data_name"]
+
+            LOG.info("{} action requested by {} for '{}'".format(
+                action,
+                data['requester'],
+                buildername,
+            ))
+            LOG.info('Request for {}'.format(link_to_job))
+
+            buildername = filter_invalid_builders(buildername)
+
+            if buildername is None:
+                LOG.info('Treeherder can send us invalid builder names.')
+                LOG.info('See https://bugzilla.mozilla.org/show_bug.cgi?id=1242038.')
+                LOG.warning('Requested job name "%s" is invalid.' % job_info['ref_data_name'])
+                exit_code = -1  # FAILURE
+            else:
+                exit_code = manual_backfill(
+                    revision=revision,
+                    buildername=buildername,
+                    dry_run=dry_run,
+                )
+                if not dry_run:
+                    status = 'Backfill request sent'
+                else:
+                    status = 'Dry-run mode, nothing was backfilled.'
+                LOG.debug(status)
 
     else:
         LOG.error(
