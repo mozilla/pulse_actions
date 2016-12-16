@@ -8,7 +8,7 @@
         },
         "manual_backfill": {
             "exchange": "exchange/treeherder/v1/job-actions",
-            "topic": "buildbot.#.backfill"
+            "topic": "#.#.backfill"
         },
         "runnable": {
             "exchange": "exchange/treeherder/v1/resultset-runnable-job-actions",
