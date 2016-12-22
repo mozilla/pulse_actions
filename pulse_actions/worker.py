@@ -7,6 +7,8 @@ import traceback
 from argparse import ArgumentParser
 from timeit import default_timer
 
+from amqp.exceptions import ConsumerCancelled
+
 import pulse_actions.handlers.treeherder_job_action as treeherder_job_action
 import pulse_actions.handlers.treeherder_push_action as treeherder_push_action
 import pulse_actions.handlers.treeherder_add_new_jobs as treeherder_add_new_jobs
@@ -417,6 +419,8 @@ def run_listener(config_file):
             LOG.error('The user requested keyboard interruption')
             # We want to get out of the loop
             break
+        except ConsumerCancelled:
+            LOG.info('We have cleared the Pulse queue and need to restart')
         except:
             LOG.exception('CRITICAL: We should have caught this error earlier.')
 
