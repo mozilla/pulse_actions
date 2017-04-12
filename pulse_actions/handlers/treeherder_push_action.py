@@ -40,7 +40,6 @@ def on_event(data, message, dry_run, treeherder_server_url, **kwargs):
         data["resultset_id"])
     )
     revision = treeherder_client.get_resultsets(repo_name, id=resultset_id)[0]["revision"]
-    status = None
 
     if action == "trigger_missing_jobs":
         mgr = BuildAPIManager()
