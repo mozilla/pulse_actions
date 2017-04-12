@@ -21,14 +21,8 @@ def ignored(data):
     return False
 
 
-def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwargs):
-    LOG.info('Acknowledge value: {}'.format(acknowledge))
-
+def on_event(data, message, dry_run, treeherder_server_url, **kwargs):
     if ignored(data):
-        if acknowledge:
-            # We need to ack the message to remove it from our queue
-            LOG.info('Message acknowledged')
-            message.ack()
         return 0  # SUCCESS
 
     # Grabbing data received over pulse
@@ -88,11 +82,6 @@ def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwarg
     # XXX: In the future handle return codes
     add_taskcluster_jobs(task_labels, decision_task_id, repo_name, dry_run)
     add_buildbot_jobs(repo_name, revision, buildernames, metadata, dry_run)
-
-    if acknowledge:
-        # We need to ack the message to remove it from our queue
-        LOG.info('Message acknowledged')
-        message.ack()
 
     return 0  # SUCCESS
 

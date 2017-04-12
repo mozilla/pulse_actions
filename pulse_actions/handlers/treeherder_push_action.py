@@ -18,13 +18,8 @@ def ignored(data):
         return False
 
 
-def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwargs):
-    LOG.info('Acknowledge value: {}'.format(acknowledge))
-
+def on_event(data, message, dry_run, treeherder_server_url, **kwargs):
     if ignored(data):
-        if acknowledge:
-            LOG.info('Message acknowledged')
-            message.ack()
         return 0  # SUCCESS
 
     # Cleaning mozci caches
@@ -50,10 +45,6 @@ def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwarg
     if action == "trigger_missing_jobs":
         mgr = BuildAPIManager()
         mgr.trigger_missing_jobs_for_revision(repo_name, revision, dry_run=dry_run)
-        if acknowledge:
-            status = 'trigger_missing_jobs request sent'
-        else:
-            status = 'Dry-mode, no request sent'
 
     elif action == "trigger_all_talos_jobs":
         trigger_all_talos_jobs(
@@ -63,21 +54,9 @@ def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwarg
             priority=-1,
             dry_run=dry_run
         )
-        if acknowledge:
-            status = 'trigger_all_talos_jobs: {0} times request sent with priority'\
-                     'lower then normal'.format(times)
-        else:
-            status = 'Dry-mode, no request sent'
     else:
         raise Exception(
             'We were not aware of the "{}" action. Please address the code.'.format(action)
         )
-
-    LOG.debug(status)
-
-    if acknowledge:
-        # We need to ack the message to remove it from our queue
-        LOG.info('Message acknowledged')
-        message.ack()
 
     return 0  # SUCCESS

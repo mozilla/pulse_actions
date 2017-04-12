@@ -227,9 +227,11 @@ def message_handler(data, message, *args, **kwargs):
     '''
     if CONFIG['route']:
         try:
+            if CONFIG['acknowledge']:
+                LOG.info('Message acknowledged')
+                message.ack()
             route(data=data, message=message, dry_run=CONFIG['dry_run'],
-                  treeherder_server_url=CONFIG['treeherder_server_url'],
-                  acknowledge=CONFIG['acknowledge'])
+                  treeherder_server_url=CONFIG['treeherder_server_url'])
         except KeyboardInterrupt:
             # We want to get out of run_listener()
             raise
@@ -319,7 +321,6 @@ def end_request(exit_code, data, log_path, treeherder_job, start_time):
 def route(data, message, **kwargs):
     ''' We need to map every exchange/topic to a specific handler.'''
     post_to_treeherder = True
-    acknowledge = kwargs.get('acknowledge', False)
 
     # XXX: This is not ideal; we should define in the config which exchange uses which handler
     # XXX: Specify here which treeherder host
@@ -347,9 +348,6 @@ def route(data, message, **kwargs):
 
     if ignored(data):
         LOG.info('Message {}'.format(str(data)[:120]))
-        if acknowledge:
-            LOG.info('Message acknowledged')
-            message.ack()
     elif not post_to_treeherder:
         try:
             LOG.info('#### New automatic request ####.')

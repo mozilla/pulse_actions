@@ -79,20 +79,14 @@ def ignored(data):
         return True
 
 
-def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwargs):
+def on_event(data, message, dry_run, treeherder_server_url, **kwargs):
     """Act upon Treeherder job events.
 
     Return if the outcome was successful or not
     """
-    LOG.info('Acknowledge value: {}'.format(acknowledge))
-
     exit_code = 0  # SUCCESS
 
     if ignored(data):
-        if acknowledge:
-            # We need to ack the message to remove it from our queue
-            LOG.info('Message acknowledged')
-            message.ack()
         return exit_code
 
     # Cleaning mozci caches
@@ -190,10 +184,5 @@ def on_event(data, message, dry_run, treeherder_server_url, acknowledge, **kwarg
             'We were not aware of the "{}" action. Please file an issue'.format(action)
         )
         exit_code = -1  # FAILURE
-
-    if acknowledge:
-        # We need to ack the message to remove it from our queue
-        LOG.info('Message acknowledged')
-        message.ack()
 
     return exit_code

@@ -34,18 +34,12 @@ def ignored(data):
         return True
 
 
-def on_event(data, message, dry_run, acknowledge, **kwargs):
+def on_event(data, message, dry_run, **kwargs):
     """
     Whenever PGO builds are completed in mozilla-inbound or fx-team,
     we trigger the corresponding talos jobs twice.
     """
-    LOG.info('Acknowledge value: {}'.format(acknowledge))
-
     if ignored(data):
-        if acknowledge:
-            # We need to ack the message to remove it from our queue
-            LOG.info('Message acknowledged')
-            message.ack()
         LOG.debug("'%s' with status %i. Nothing to be done.",
                   data['payload']['buildername'], data['payload']['status'])
         return 0  # SUCCESS
@@ -62,10 +56,6 @@ def on_event(data, message, dry_run, acknowledge, **kwargs):
     buildername = filter_invalid_builders(buildername)
 
     if buildername is None:
-        if acknowledge:
-            # We need to ack the message to remove it from our queue
-            LOG.info('Message acknowledged')
-            message.ack()
         return -1  # FAILURE
 
     status = trigger_talos_jobs_for_build(
@@ -74,11 +64,6 @@ def on_event(data, message, dry_run, acknowledge, **kwargs):
         times=2,
         dry_run=dry_run
     )
-
-    if acknowledge:
-        # We need to ack the message to remove it from our queue
-        LOG.info('Message acknowledged')
-        message.ack()
 
     LOG.info('We triggered talos jobs for the build.')
     return status
